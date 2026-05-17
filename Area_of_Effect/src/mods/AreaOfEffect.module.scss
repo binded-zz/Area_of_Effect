@@ -1,0 +1,350 @@
+// ─── Barebones Design Tokens (Solid Colors for Stability) ────────────────────
+$bg-main: #1A262F;
+$bg-header: #243441;
+$accent-blue: #00A2E8;
+$text-primary: #FFFFFF;
+$text-secondary: #A0AAB2;
+$border-light: #333333;
+
+.window {
+    width: 520rem;
+    max-height: 700rem;
+    background-color: $bg-main;
+    border-radius: 6rem;
+    border-width: 1px;
+    border-style: solid;
+    border-color: $border-light;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 16rem;
+    padding-right: 16rem;
+    height: 54rem;
+    background-color: $bg-header;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: $border-light;
+}
+
+.studioLabel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.studioTag {
+    font-size: 11rem;
+    font-weight: 700;
+    color: $text-secondary;
+    margin-right: 8rem;
+}
+
+.studioName {
+    font-size: 18rem;
+    font-weight: 800;
+    color: $text-primary;
+}
+
+.scrollBody {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 550rem;
+    padding-top: 10rem;
+    padding-bottom: 10rem;
+}
+
+.section {
+    margin-bottom: 10rem;
+    padding-left: 16rem;
+    padding-right: 16rem;
+}
+
+// ─── Layered Info Card Classes ───────────────────────────────────────────────
+.infoCard {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4rem;
+    padding: 12rem;
+    margin-bottom: 12rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cardHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12rem;
+    padding-bottom: 8rem;
+    border-bottom: 1px solid $border-light;
+}
+
+.buildingName {
+    font-size: 16rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin-left: 12rem;
+    flex-grow: 1;
+}
+
+.efficiencyBar {
+    width: 60rem;
+    height: 6rem;
+    background-color: #333;
+    border-radius: 3rem;
+    overflow: hidden;
+}
+
+.efficiencyFill {
+    height: 100%;
+    background-color: #00FF00;
+}
+
+.statRowLabel {
+    width: 140rem;
+    font-size: 13rem;
+    color: $text-secondary; // Light-gray secondary label
+    font-weight: 600;
+}
+
+.statRowValue {
+    font-size: 13rem;
+    color: $text-primary;
+    font-weight: 700;
+}
+
+.footerActions {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 12rem 16rem;
+    border-top: 1px solid $border-light;
+}
+
+.footerBtn {
+    background-color: #333333;
+    color: white;
+    font-size: 12rem;
+    font-weight: 700;
+    padding: 6rem 12rem;
+    border-radius: 4rem;
+    margin-left: 8rem;
+    cursor: pointer;
+}
+
+.footerBtnPrimary {
+    background-color: $accent-blue;
+}
+
+.sectionTitle {
+    font-size: 14rem;
+    font-weight: 700;
+    color: $accent-blue;
+    margin-bottom: 12rem;
+    text-transform: uppercase;
+}
+
+// ─── Toggles ─────────────────────────────────────────────────────────────────
+.tuneRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12rem;
+}
+
+.tuneLabel {
+    width: 200rem;
+    font-size: 14rem;
+    color: $text-primary;
+}
+
+.toggle {
+    width: 44rem;
+    height: 22rem;
+    background-color: #333333;
+    border-radius: 11rem;
+    position: relative;
+    cursor: pointer;
+}
+
+.toggleOn {
+    background-color: $accent-blue;
+}
+
+.toggleThumb {
+    position: absolute;
+    top: 3rem;
+    left: 3rem;
+    width: 16rem;
+    height: 16rem;
+    background-color: white;
+    border-radius: 8rem;
+}
+
+.layoutBtnRow {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.layoutBtn {
+    width: 110rem;
+    padding: 8rem;
+    background-color: #333333;
+    color: white;
+    font-size: 11rem;
+    font-weight: 800;
+    text-align: center;
+    border-radius: 4rem;
+    margin-right: 8rem;
+    margin-bottom: 8rem;
+    cursor: pointer;
+}
+
+.layoutBtnActive {
+    background-color: $accent-blue;
+}
+
+// ─── Native Component Layout Helpers ────────────────────────────────────────
+.layerRowNative {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+}
+
+.layerIconWrapNative {
+    width: 24rem;
+    height: 24rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 12rem;
+    margin-right: 12rem;
+}
+
+.bracketLabelNative {
+    width: 120rem;
+    font-size: 13rem;
+    font-weight: 700;
+}
+
+.sliderContainerNative {
+    width: 220rem;
+    max-width: 240rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: auto;
+}
+
+.sliderValText {
+    width: 45rem;
+    text-align: right;
+    font-size: 11rem;
+    font-weight: 800;
+    color: $text-secondary;
+    margin-left: 8rem;
+}
+
+// ─── Floating Stats Overlay (Emergency Fix) ──────────────────────────────────
+.overlayRoot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.statPinContainer {
+    position: absolute;
+    width: 200rem;
+    height: 100rem;
+}
+
+.multiStatBubble {
+    background-color: #111111;
+    border-width: 2px;
+    border-style: solid;
+    border-color: #444444;
+    border-radius: 8rem;
+    padding: 10rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.statRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4rem;
+}
+
+.statName {
+    font-size: 14rem;
+    font-weight: 700;
+    margin-right: 8rem;
+}
+
+.statVal {
+    font-size: 16rem;
+    font-weight: 800;
+    color: #00FFBB;
+}
+
+// ─── Light Theme ─────────────────────────────────────────────────────────────
+.lightTheme {
+    background-color: #FFFFFF;
+    border-color: #CCCCCC;
+    .studioName { color: #000000; }
+    .tuneLabel { color: #000000; }
+    .bracketLabel { color: #000000; }
+}
+
+.highVis {
+    .multiStatBubble { background-color: #FFFFFF; border-color: #000000; }
+    .statName { color: #000000; }
+    .statVal { color: #008800; }
+}
+
+// ─── Layouts ─────────────────────────────────────────────────────────────────
+.sidebarLayout {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    width: 400rem;
+    border-radius: 0;
+}
+
+.floatingLayout {
+    width: 360rem;
+}
+
+.gridLayout {
+    width: 520rem;
+}
+
+.fullScreenWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+.draggableContainer {
+    position: absolute;
+    pointer-events: auto;
+}
