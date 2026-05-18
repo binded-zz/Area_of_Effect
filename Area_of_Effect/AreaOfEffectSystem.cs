@@ -501,6 +501,47 @@ namespace Area_of_Effect
         }
         private List<CachedStat> m_CachedStats = new List<CachedStat>();
 
+        private Dictionary<float3, List<AreaOfEffectUISystem.StatEntry>> m_GroupedStats = new Dictionary<float3, List<AreaOfEffectUISystem.StatEntry>>();
+        private List<List<AreaOfEffectUISystem.StatEntry>> m_ListPool = new List<List<AreaOfEffectUISystem.StatEntry>>();
+        private int m_ListPoolUsed = 0;
+
+        private Dictionary<string, string> m_LabelToLayerIdCache = new Dictionary<string, string>();
+        private Dictionary<Color, string> m_ColorToHexCache = new Dictionary<Color, string>();
+
+        private List<AreaOfEffectUISystem.StatEntry> GetListFromPool()
+        {
+            if (m_ListPoolUsed < m_ListPool.Count)
+            {
+                var list = m_ListPool[m_ListPoolUsed++];
+                list.Clear();
+                return list;
+            }
+            var newList = new List<AreaOfEffectUISystem.StatEntry>();
+            m_ListPool.Add(newList);
+            m_ListPoolUsed++;
+            return newList;
+        }
+
+        private string GetLayerIdForLabel(string label)
+        {
+            if (m_LabelToLayerIdCache.TryGetValue(label, out var id)) return id;
+            string newId;
+            if (label == "Well-being") newId = "layer_wellbeing";
+            else if (label == "Attractiveness") newId = "layer_parks";
+            else if (label == "Telecom Range") newId = "layer_telecom";
+            else newId = $"LocalModifier_{label}";
+            m_LabelToLayerIdCache[label] = newId;
+            return newId;
+        }
+
+        private string GetHexForColor(Color color)
+        {
+            if (m_ColorToHexCache.TryGetValue(color, out var hex)) return hex;
+            string newHex = ColorUtility.ToHtmlStringRGB(color);
+            m_ColorToHexCache[color] = newHex;
+            return newHex;
+        }
+
         private void UpdateFloatingStats()
         {
             m_FloatingStats.Clear();
@@ -560,26 +601,26 @@ namespace Area_of_Effect
             }
 
             float overlayHeight = Mod.Settings != null ? Mod.Settings.OverlayHeight : 10f;
-            var groupedStats = new Dictionary<float3, List<AreaOfEffectUISystem.StatEntry>>();
+            m_GroupedStats.Clear();
+            m_ListPoolUsed = 0;
             
             for (int i = 0; i < m_CachedStats.Count; i++) {
                 var stat = m_CachedStats[i];
-                if (!groupedStats.ContainsKey(stat.worldPos))
-                    groupedStats[stat.worldPos] = new List<AreaOfEffectUISystem.StatEntry>();
+                if (!m_GroupedStats.TryGetValue(stat.worldPos, out var list))
+                {
+                    list = GetListFromPool();
+                    m_GroupedStats[stat.worldPos] = list;
+                }
                 
                 string hex = "ffffff";
-                string layerId = "";
-                if (stat.label == "Well-being") layerId = "layer_wellbeing";
-                else if (stat.label == "Attractiveness") layerId = "layer_parks";
-                else if (stat.label == "Telecom Range") layerId = "layer_telecom";
-                else layerId = $"LocalModifier_{stat.label}";
+                string layerId = GetLayerIdForLabel(stat.label);
 
                 if (m_UISystem.TryGetGlobalLayerSetting(layerId, out var gs)) 
-                    hex = ColorUtility.ToHtmlStringRGB(gs.Color);
+                    hex = GetHexForColor(gs.Color);
                 else if (m_UISystem.TryGetLocalEffectSetting(layerId, out var ls))
-                    hex = ColorUtility.ToHtmlStringRGB(ls.Color);
+                    hex = GetHexForColor(ls.Color);
 
-                groupedStats[stat.worldPos].Add(new AreaOfEffectUISystem.StatEntry { 
+                list.Add(new AreaOfEffectUISystem.StatEntry { 
                     label = stat.label, 
                     value = stat.value, 
                     icon = stat.icon,
@@ -587,7 +628,7 @@ namespace Area_of_Effect
                 });
             }
 
-            foreach (var kvp in groupedStats)
+            foreach (var kvp in m_GroupedStats)
             {
                 float3 labelWorldPos = kvp.Key;
                 labelWorldPos.y += overlayHeight + 15f; 
