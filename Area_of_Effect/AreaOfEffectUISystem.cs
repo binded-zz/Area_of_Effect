@@ -93,6 +93,9 @@ namespace Area_of_Effect
 
             AddBinding(m_LocalSettingsBinding   = new ValueBinding<string>("area_of_effect", "localSettings", "[]"));
             AddBinding(m_GlobalSettingsBinding  = new ValueBinding<string>("area_of_effect", "globalSettings", "[]"));
+            LoadSavedSettings();
+            m_LocalSettingsBinding.Update(SerializeDict(m_LocalSettings));
+            m_GlobalSettingsBinding.Update(SerializeDict(m_GlobalSettings));
             AddBinding(m_IsPanelOpenBinding     = new ValueBinding<bool>  ("area_of_effect", "isPanelOpen", false));
             AddBinding(m_OpacityBinding         = new ValueBinding<float> ("area_of_effect", "opacity", (float)opacity));
             AddBinding(m_PresetBinding          = new ValueBinding<int>   ("area_of_effect", "preset", preset));
@@ -206,14 +209,22 @@ namespace Area_of_Effect
 
         public void RegisterLocalEffectType(string id, string name, UnityEngine.Color defaultColor)
         {
-            if (m_LocalSettings.ContainsKey(id)) return;
+            if (m_LocalSettings.ContainsKey(id)) {
+                m_LocalSettings[id].Name = name;
+                m_LocalSettingsBinding?.Update(SerializeDict(m_LocalSettings));
+                return;
+            }
             m_LocalSettings[id] = new EffectSetting { Id = id, Name = name, Enabled = true, Color = defaultColor, Opacity = 1.0f };
             m_LocalSettingsBinding?.Update(SerializeDict(m_LocalSettings));
         }
 
         public void RegisterGlobalLayer(string id, string name, UnityEngine.Color defaultColor)
         {
-            if (m_GlobalSettings.ContainsKey(id)) return;
+            if (m_GlobalSettings.ContainsKey(id)) {
+                m_GlobalSettings[id].Name = name;
+                m_GlobalSettingsBinding?.Update(SerializeDict(m_GlobalSettings));
+                return;
+            }
             m_GlobalSettings[id] = new EffectSetting { Id = id, Name = name, Enabled = true, Color = defaultColor, Opacity = 1.0f };
             m_GlobalSettingsBinding?.Update(SerializeDict(m_GlobalSettings));
         }
@@ -259,15 +270,37 @@ namespace Area_of_Effect
             return false;
         }
 
-        private void ToggleLocal(string id, bool on) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Enabled = on; m_LocalSettingsBinding.Update(SerializeDict(m_LocalSettings)); } }
-        private void ToggleAllLocal(bool on) { foreach (var kv in m_LocalSettings) kv.Value.Enabled = on; m_LocalSettingsBinding.Update(SerializeDict(m_LocalSettings)); }
-        private void SetLocalColor(string id, string hex) { if (m_LocalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; m_LocalSettingsBinding.Update(SerializeDict(m_LocalSettings)); } }
-        private void SetLocalAlpha(string id, float a) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); m_LocalSettingsBinding.Update(SerializeDict(m_LocalSettings)); } }
+        private void SaveLocalSettings()
+        {
+            string serialized = SerializeDict(m_LocalSettings);
+            m_LocalSettingsBinding?.Update(serialized);
+            if (Mod.Settings != null)
+            {
+                Mod.Settings.SavedLocalSettings = serialized;
+                Mod.Settings.ApplyAndSave();
+            }
+        }
 
-        private void ToggleGlobal(string id, bool on) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Enabled = on; m_GlobalSettingsBinding.Update(SerializeDict(m_GlobalSettings)); } }
-        private void ToggleAllGlobal(bool on) { foreach (var kv in m_GlobalSettings) kv.Value.Enabled = on; m_GlobalSettingsBinding.Update(SerializeDict(m_GlobalSettings)); }
-        private void SetGlobalColor(string id, string hex) { if (m_GlobalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; m_GlobalSettingsBinding.Update(SerializeDict(m_GlobalSettings)); } }
-        private void SetGlobalAlpha(string id, float a) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); m_GlobalSettingsBinding.Update(SerializeDict(m_GlobalSettings)); } }
+        private void SaveGlobalSettings()
+        {
+            string serialized = SerializeDict(m_GlobalSettings);
+            m_GlobalSettingsBinding?.Update(serialized);
+            if (Mod.Settings != null)
+            {
+                Mod.Settings.SavedGlobalSettings = serialized;
+                Mod.Settings.ApplyAndSave();
+            }
+        }
+
+        private void ToggleLocal(string id, bool on) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Enabled = on; SaveLocalSettings(); } }
+        private void ToggleAllLocal(bool on) { foreach (var kv in m_LocalSettings) kv.Value.Enabled = on; SaveLocalSettings(); }
+        private void SetLocalColor(string id, string hex) { if (m_LocalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; SaveLocalSettings(); } }
+        private void SetLocalAlpha(string id, float a) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); SaveLocalSettings(); } }
+
+        private void ToggleGlobal(string id, bool on) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Enabled = on; SaveGlobalSettings(); } }
+        private void ToggleAllGlobal(bool on) { foreach (var kv in m_GlobalSettings) kv.Value.Enabled = on; SaveGlobalSettings(); }
+        private void SetGlobalColor(string id, string hex) { if (m_GlobalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; SaveGlobalSettings(); } }
+        private void SetGlobalAlpha(string id, float a) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); SaveGlobalSettings(); } }
 
         private string SerializeDict(Dictionary<string, EffectSetting> d)
         {
@@ -283,6 +316,96 @@ namespace Area_of_Effect
                 parts.Add($"{{\"id\":\"{s.Id}\",\"name\":\"{s.Name}\",\"enabled\":{(s.Enabled ? "true" : "false")},\"r\":{r},\"g\":{g},\"b\":{b},\"a\":{a},\"opacity\":{o}}}");
             }
             return "[" + string.Join(",", parts) + "]";
+        }
+
+        private void LoadSavedSettings()
+        {
+            if (Mod.Settings == null) return;
+            LoadSettingsDict(Mod.Settings.SavedLocalSettings, m_LocalSettings);
+            LoadSettingsDict(Mod.Settings.SavedGlobalSettings, m_GlobalSettings);
+        }
+
+        private void LoadSettingsDict(string savedStr, Dictionary<string, EffectSetting> dict)
+        {
+            if (string.IsNullOrEmpty(savedStr) || savedStr == "[]") return;
+            try
+            {
+                string content = savedStr.Trim();
+                if (content.StartsWith("[")) content = content.Substring(1);
+                if (content.EndsWith("]")) content = content.Substring(0, content.Length - 1);
+
+                string[] objects = content.Split(new string[] { "},{" }, System.StringSplitOptions.RemoveEmptyEntries);
+                foreach (string obj in objects)
+                {
+                    string cleanObj = obj.Trim('{', '}');
+                    string id = ExtractJsonValue(cleanObj, "id");
+                    if (string.IsNullOrEmpty(id)) continue;
+
+                    string name = ExtractJsonValue(cleanObj, "name");
+                    string enabledStr = ExtractJsonValue(cleanObj, "enabled");
+                    string rStr = ExtractJsonValue(cleanObj, "r");
+                    string gStr = ExtractJsonValue(cleanObj, "g");
+                    string bStr = ExtractJsonValue(cleanObj, "b");
+                    string aStr = ExtractJsonValue(cleanObj, "a");
+                    string opacityStr = ExtractJsonValue(cleanObj, "opacity");
+
+                    bool enabled = enabledStr == "true";
+                    
+                    float r = 1f, g = 1f, b = 1f, a = 1f;
+                    float.TryParse(rStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out r);
+                    float.TryParse(gStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out g);
+                    float.TryParse(bStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out b);
+                    float.TryParse(aStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out a);
+
+                    float opacity = 1.0f;
+                    float.TryParse(opacityStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out opacity);
+
+                    dict[id] = new EffectSetting
+                    {
+                        Id = id,
+                        Name = string.IsNullOrEmpty(name) ? id : name,
+                        Enabled = enabled,
+                        Color = new Color(r, g, b, a),
+                        Opacity = opacity
+                    };
+                }
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("Error loading saved Area of Effect layer settings: " + ex.Message);
+            }
+        }
+
+        private string ExtractJsonValue(string objStr, string key)
+        {
+            string pattern = "\"" + key + "\":";
+            int idx = objStr.IndexOf(pattern);
+            if (idx == -1)
+            {
+                pattern = key + ":";
+                idx = objStr.IndexOf(pattern);
+                if (idx == -1) return "";
+            }
+
+            int startIdx = idx + pattern.Length;
+            if (startIdx >= objStr.Length) return "";
+
+            if (objStr[startIdx] == '"')
+            {
+                startIdx++;
+                int endIdx = objStr.IndexOf('"', startIdx);
+                if (endIdx == -1) return "";
+                return objStr.Substring(startIdx, endIdx - startIdx);
+            }
+            else
+            {
+                int endIdx = objStr.IndexOf(',', startIdx);
+                if (endIdx == -1)
+                {
+                    return objStr.Substring(startIdx).Trim();
+                }
+                return objStr.Substring(startIdx, endIdx - startIdx).Trim();
+            }
         }
     }
 }

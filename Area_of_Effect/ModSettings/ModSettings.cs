@@ -61,7 +61,15 @@ namespace Area_of_Effect.ModSettings
             LabelDistance = 1500;
             ShowStats = true;
             HighVis = false;
+            SavedLocalSettings = "";
+            SavedGlobalSettings = "";
         }
+
+        [SettingsUIHidden]
+        public string SavedLocalSettings { get; set; } = "";
+
+        [SettingsUIHidden]
+        public string SavedGlobalSettings { get; set; } = "";
     }
 
     public class LocaleEN : IDictionarySource
