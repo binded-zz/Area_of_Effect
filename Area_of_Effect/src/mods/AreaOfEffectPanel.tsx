@@ -96,30 +96,29 @@ const LayerRow = React.memo<{
 
     return (
         <div style={{ marginBottom: '8rem', paddingBottom: '6rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-            {/* Row 1: Toggle + Icon + Clickable Name (with invisible ColorField overlay) */}
-            <div className={styles.layerRowNative}>
-                <AoeToggle checked={layer.enabled} onChange={() => onToggle(layer.id, layer.enabled)} />
-                <div className={styles.layerIconWrapNative}>
-                    <Icon name={layer.id} color={color} size={22} />
-                </div>
-                
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <div className={styles.bracketLabelNative} style={{ color }}>
-                        {layer.name}
+            <div className={styles.layerRowNative} style={{ justifyContent: 'space-between' }}>
+                {/* Left Side Group: Toggle + Icon + Truncating Clickable Name */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8rem', flexGrow: 1, minWidth: 0 }}>
+                    <AoeToggle checked={layer.enabled} onChange={() => onToggle(layer.id, layer.enabled)} />
+                    <div className={styles.layerIconWrapNative} style={{ margin: '0 4rem' }}>
+                        <Icon name={layer.id} color={color} size={22} />
                     </div>
-                    {/* Invisible ColorField that intercepts the click and opens the picker */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}>
-                        <ColorField
-                            value={displayColor}
-                            onChange={handleColorChange}
-                        />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
+                        <div className={styles.bracketLabelNative} style={{ color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {layer.name}
+                        </div>
+                        {/* Invisible ColorField that intercepts the click and opens the picker */}
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}>
+                            <ColorField
+                                value={displayColor}
+                                onChange={handleColorChange}
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
-            {/* Row 2: Opacity slider */}
-            <div className={styles.layerRowNative} style={{ paddingLeft: '52rem' }}>
-                <span className={styles.statRowLabel}>Opacity</span>
-                <div className={styles.sliderContainerNative}>
+
+                {/* Right-aligned Opacity Slider on same row */}
+                <div className={styles.sliderContainerNative} style={{ marginLeft: '12rem' }}>
                     <div className={styles.sliderWrap}>
                         <Slider value={displayOpacity} start={0} end={100} onChange={handleAlphaChange} />
                     </div>
@@ -250,6 +249,9 @@ export const AreaOfEffectPanel: React.FC = () => {
         return prevGlobalSize.current;
     }, [globalSizeRaw, forceRender]);
 
+    const preset = useValue(preset$);
+    const setPreset = useCallback((val: number) => trigger('area_of_effect', 'setPreset', val), []);
+
     const globalHeightRaw = useValue(globalHeight$);
     const prevGlobalHeight = useRef(globalHeightRaw);
     const globalHeight = React.useMemo(() => {
@@ -257,7 +259,21 @@ export const AreaOfEffectPanel: React.FC = () => {
         return prevGlobalHeight.current;
     }, [globalHeightRaw, forceRender]);
 
-    // ── Guard: wait for native component registry ────────────────────────
+    // Stable Callbacks to prevent LayerRow re-renders
+    const handleLocalToggle = useCallback((id: string, enabled: boolean) => trigger('area_of_effect', 'toggleLocalEffect', id, !enabled), []);
+    const handleLocalAlpha = useCallback((id: string, val: number) => { markDragging(); trigger('area_of_effect', 'setLocalEffectAlpha', id, val / 100); }, [markDragging]);
+    const handleLocalColor = useCallback((id: string, hex: string) => { markDragging(); trigger('area_of_effect', 'setLocalEffectColor', id, hex); }, [markDragging]);
+
+    const handleGlobalToggle = useCallback((id: string, enabled: boolean) => trigger('area_of_effect', 'toggleGlobalLayer', id, !enabled), []);
+    const handleGlobalAlpha = useCallback((id: string, val: number) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerAlpha', id, val / 100); }, [markDragging]);
+    const handleGlobalColor = useCallback((id: string, hex: string) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerColor', id, hex); }, [markDragging]);
+
+    // ── Settings Handlers ────────────────────────────────────────────────
+    const handleSetOpacity = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOpacity', v); }, [markDragging]);
+    const handleSetCircleSize = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setSize', v); }, [markDragging]);
+    const handleSetOverlayHeight = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setHeight', v); }, [markDragging]);
+
+    // ── Guard: wait for native component registry (must be after all hooks) ──
     if (!VanillaComponentResolver.instance) {
         return <div className={styles.window}>Loading...</div>;
     }
@@ -276,15 +292,6 @@ export const AreaOfEffectPanel: React.FC = () => {
         const newState = !allLocalEnabled;
         localSettings.forEach(l => trigger('area_of_effect', 'toggleLocalEffect', l.id, newState));
     };
-
-    // Stable Callbacks to prevent LayerRow re-renders
-    const handleLocalToggle = useCallback((id: string, enabled: boolean) => trigger('area_of_effect', 'toggleLocalEffect', id, !enabled), []);
-    const handleLocalAlpha = useCallback((id: string, val: number) => { markDragging(); trigger('area_of_effect', 'setLocalEffectAlpha', id, val / 100); }, [markDragging]);
-    const handleLocalColor = useCallback((id: string, hex: string) => { markDragging(); trigger('area_of_effect', 'setLocalEffectColor', id, hex); }, [markDragging]);
-
-    const handleGlobalToggle = useCallback((id: string, enabled: boolean) => trigger('area_of_effect', 'toggleGlobalLayer', id, !enabled), []);
-    const handleGlobalAlpha = useCallback((id: string, val: number) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerAlpha', id, val / 100); }, [markDragging]);
-    const handleGlobalColor = useCallback((id: string, hex: string) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerColor', id, hex); }, [markDragging]);
 
 
 
@@ -367,10 +374,7 @@ export const AreaOfEffectPanel: React.FC = () => {
         </>
     );
 
-    // ── Settings Handlers ────────────────────────────────────────────────
-    const handleSetOpacity = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOpacity', v); }, [markDragging]);
-    const handleSetCircleSize = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setCircleSize', v); }, [markDragging]);
-    const handleSetOverlayHeight = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOverlayHeight', v); }, [markDragging]);
+
 
     // ── SETTINGS TAB ─────────────────────────────────────────────────────
     const renderSettingsTab = () => (
@@ -399,6 +403,14 @@ export const AreaOfEffectPanel: React.FC = () => {
                         min={-100} max={500} unit="m" 
                         onChange={handleSetOverlayHeight} 
                     />
+                    <div className={styles.layerRowNative} style={{ marginTop: '12rem', marginBottom: '4rem' }}>
+                        <span className={styles.statRowLabel} style={{ flexGrow: 1 }}>Visual Preset</span>
+                        <div style={{ display: 'flex', gap: '5rem' }}>
+                            <button className={`${styles.footerBtn} ${preset === 0 ? styles.footerBtnPrimary : ''}`} onClick={() => setPreset(0)}>Neon Rings</button>
+                            <button className={`${styles.footerBtn} ${preset === 1 ? styles.footerBtnPrimary : ''}`} onClick={() => setPreset(1)}>Soft Glow</button>
+                            <button className={`${styles.footerBtn} ${preset === 2 ? styles.footerBtnPrimary : ''}`} onClick={() => setPreset(2)}>Classic</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

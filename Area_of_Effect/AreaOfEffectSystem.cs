@@ -3,6 +3,8 @@ using Colossal.Logging;
 using Game;
 using Game.Prefabs;
 using Game.Rendering;
+using Unity.Collections;
+using Unity.Jobs;
 using Game.Tools;
 using Game.UI;
 using Unity.Entities;
@@ -18,6 +20,192 @@ namespace Area_of_Effect
 {
     public partial class AreaOfEffectSystem : GameSystemBase
     {
+        public struct OverlayDrawItem
+        {
+            public float3 m_Position;
+            public int m_Category;
+        }
+
+        public struct CachedStatItem
+        {
+            public float3 m_Position;
+            public int m_IconType; // 0 = Healthcare, 1 = Wellbeing, 2 = Meals, 3 = Parks, 4 = Telecom
+            public int m_LabelType; // 0 = Healthcare, 1 = Well-being, 2 = Meals, 3 = Attractiveness, 4 = Telecom Range
+            public float m_Value;
+        }
+
+        [Unity.Burst.BurstCompile]
+        public struct FindGlobalOverlaysJob : IJobChunk
+        {
+            [ReadOnly] public ComponentTypeHandle<PrefabRef> m_PrefabType;
+            [ReadOnly] public ComponentTypeHandle<Transform> m_TransformType;
+            
+            [ReadOnly] public ComponentLookup<PoliceStationData> m_PoliceLookups;
+            [ReadOnly] public ComponentLookup<FireStationData> m_FireLookups;
+            [ReadOnly] public ComponentLookup<ParkData> m_ParkLookups;
+            [ReadOnly] public ComponentLookup<HospitalData> m_HospitalLookups;
+            [ReadOnly] public ComponentLookup<TelecomFacilityData> m_TelecomLookups;
+            [ReadOnly] public ComponentLookup<PostFacilityData> m_PostLookups;
+            [ReadOnly] public BufferLookup<LocalModifierData> m_LocalModifierLookups;
+            [ReadOnly] public ComponentLookup<SchoolData> m_SchoolLookups;
+
+            public bool m_LayerWellbeingEnabled;
+            public bool m_LayerPoliceEnabled;
+            public bool m_LayerFireEnabled;
+            public bool m_LayerParksEnabled;
+            public bool m_LayerHealthcareEnabled;
+            public bool m_LayerTelecomEnabled;
+            public bool m_LayerPostEnabled;
+            public bool m_LayerEduElementaryEnabled;
+            public bool m_LayerEduHighschoolEnabled;
+            public bool m_LayerEduCollegeEnabled;
+            public bool m_LayerEduUniversityEnabled;
+
+            public NativeList<OverlayDrawItem> m_DrawList;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in Unity.Burst.Intrinsics.v128 chunkEnabledMask)
+            {
+                var prefabs = chunk.GetNativeArray(ref m_PrefabType);
+                var transforms = chunk.GetNativeArray(ref m_TransformType);
+
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    Entity prefab = prefabs[i].m_Prefab;
+                    float3 pos = transforms[i].m_Position;
+
+                    int category = -1;
+
+                    if (m_SchoolLookups.HasComponent(prefab))
+                    {
+                        SchoolData sd = m_SchoolLookups[prefab];
+                        int lvl = (int)sd.m_EducationLevel;
+                        if (lvl <= 1) { if (m_LayerEduElementaryEnabled) category = 7; }
+                        else if (lvl == 2) { if (m_LayerEduHighschoolEnabled) category = 8; }
+                        else if (lvl == 3) { if (m_LayerEduCollegeEnabled) category = 9; }
+                        else { if (m_LayerEduUniversityEnabled) category = 10; }
+                    }
+
+                    if (category == -1)
+                    {
+                        if (m_LayerPoliceEnabled && m_PoliceLookups.HasComponent(prefab)) category = 1;
+                        else if (m_LayerFireEnabled && m_FireLookups.HasComponent(prefab)) category = 2;
+                        else if (m_LayerParksEnabled && m_ParkLookups.HasComponent(prefab)) category = 3;
+                        else if (m_LayerHealthcareEnabled && m_HospitalLookups.HasComponent(prefab)) category = 4;
+                        else if (m_LayerTelecomEnabled && m_TelecomLookups.HasComponent(prefab)) category = 5;
+                        else if (m_LayerPostEnabled && m_PostLookups.HasComponent(prefab)) category = 6;
+                        else if (m_LayerWellbeingEnabled && m_LocalModifierLookups.HasBuffer(prefab)) category = 0;
+                    }
+
+                    if (category != -1)
+                    {
+                        m_DrawList.Add(new OverlayDrawItem
+                        {
+                            m_Position = pos,
+                            m_Category = category
+                        });
+                    }
+                }
+            }
+        }
+
+        [Unity.Burst.BurstCompile]
+        public struct FindFloatingStatsJob : IJobChunk
+        {
+            [ReadOnly] public ComponentTypeHandle<PrefabRef> m_PrefabType;
+            [ReadOnly] public ComponentTypeHandle<Transform> m_TransformType;
+            [ReadOnly] public EntityTypeHandle m_EntityType;
+            
+            [ReadOnly] public BufferLookup<LocalModifierData> m_LocalModifierLookup;
+            [ReadOnly] public ComponentLookup<AttractionData> m_AttractionLookup;
+            [ReadOnly] public ComponentLookup<TelecomFacilityData> m_TelecomLookup;
+            [ReadOnly] public ComponentLookup<ObjectData> m_ObjectLookup;
+
+            public float3 m_CameraPos;
+            public float m_MaxDistanceSq;
+
+            public NativeList<CachedStatItem> m_StatList;
+
+            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in Unity.Burst.Intrinsics.v128 chunkEnabledMask)
+            {
+                var prefabs = chunk.GetNativeArray(ref m_PrefabType);
+                var transforms = chunk.GetNativeArray(ref m_TransformType);
+                var entities = chunk.GetNativeArray(m_EntityType);
+
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    float3 worldPos = transforms[i].m_Position;
+                    float distSq = math.distancesq(worldPos, m_CameraPos);
+                    if (distSq > m_MaxDistanceSq) continue;
+
+                    Entity prefab = prefabs[i].m_Prefab;
+
+                    // 1. Local Modifiers
+                    if (m_LocalModifierLookup.HasBuffer(prefab))
+                    {
+                        var modifiers = m_LocalModifierLookup[prefab];
+                        for (int j = 0; j < modifiers.Length; j++)
+                        {
+                            var mod = modifiers[j];
+                            if (mod.m_Delta.max > 0)
+                            {
+                                int iconType = 0; // Healthcare
+                                int labelType = 0; // Wellbeing
+                                if (mod.m_Type == Game.Buildings.LocalModifierType.Wellbeing)
+                                {
+                                    iconType = 1; // Wellbeing
+                                    labelType = 1; // Well-being
+                                    if (m_ObjectLookup.HasComponent(prefab))
+                                    {
+                                        iconType = 2; // Meals
+                                        labelType = 2; // Meals
+                                    }
+                                }
+                                m_StatList.Add(new CachedStatItem
+                                {
+                                    m_Position = worldPos,
+                                    m_IconType = iconType,
+                                    m_LabelType = labelType,
+                                    m_Value = mod.m_Delta.max
+                                });
+                            }
+                        }
+                    }
+
+                    // 2. Attraction
+                    if (m_AttractionLookup.HasComponent(prefab))
+                    {
+                        var attr = m_AttractionLookup[prefab];
+                        if (attr.m_Attractiveness > 0)
+                        {
+                            m_StatList.Add(new CachedStatItem
+                            {
+                                m_Position = worldPos,
+                                m_IconType = 3, // Parks
+                                m_LabelType = 3, // Attractiveness
+                                m_Value = attr.m_Attractiveness
+                            });
+                        }
+                    }
+
+                    // 3. Telecom
+                    if (m_TelecomLookup.HasComponent(prefab))
+                    {
+                        var tel = m_TelecomLookup[prefab];
+                        if (tel.m_Range > 0)
+                        {
+                            m_StatList.Add(new CachedStatItem
+                            {
+                                m_Position = worldPos,
+                                m_IconType = 4, // Telecom
+                                m_LabelType = 4, // Telecom Range
+                                m_Value = tel.m_Range
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
         private ILog log;
         private ToolSystem m_ToolSystem;
         private OverlayRenderSystem m_OverlayRenderSystem;
@@ -76,8 +264,6 @@ namespace Area_of_Effect
                 // Update UI with selected building info
                 string name = m_NameSystem.GetRenderedLabelName(selectedEntity);
                 int efficiency = 0;
-                // if (EntityManager.HasComponent<Game.Buildings.Efficiency>(selectedEntity)) 
-                //    efficiency = (int)(EntityManager.GetComponentData<Game.Buildings.Efficiency>(selectedEntity).m_Efficiency * 100);
                 
                 int wellbeing = 0;
                 int reach = 0;
@@ -97,23 +283,58 @@ namespace Area_of_Effect
                 m_UISystem.UpdateBuildingData("", 0, 0, 0);
             }
 
-            // Pass 2: Global network layers - process chunks efficiently
-            var prefabType = GetComponentTypeHandle<PrefabRef>(true);
-            var transformType = GetComponentTypeHandle<Transform>(true);
-            var chunks = m_BuildingQuery.ToArchetypeChunkArray(Unity.Collections.Allocator.TempJob);
-
-            try {
-                foreach (var chunk in chunks)
+            // Pass 2: Global network layers - process chunks efficiently using Burst job
+            if (m_UISystem.IsAnyGlobalLayerActive())
+            {
+                var drawList = new NativeList<OverlayDrawItem>(Allocator.TempJob);
+                
+                FindGlobalOverlaysJob job = new FindGlobalOverlaysJob
                 {
-                    var prefabRefs = chunk.GetNativeArray(ref prefabType);
-                    var transforms = chunk.GetNativeArray(ref transformType);
-                    for (int i = 0; i < chunk.Count; i++)
+                    m_PrefabType = GetComponentTypeHandle<PrefabRef>(true),
+                    m_TransformType = GetComponentTypeHandle<Transform>(true),
+                    
+                    m_PoliceLookups = GetComponentLookup<PoliceStationData>(true),
+                    m_FireLookups = GetComponentLookup<FireStationData>(true),
+                    m_ParkLookups = GetComponentLookup<ParkData>(true),
+                    m_HospitalLookups = GetComponentLookup<HospitalData>(true),
+                    m_TelecomLookups = GetComponentLookup<TelecomFacilityData>(true),
+                    m_PostLookups = GetComponentLookup<PostFacilityData>(true),
+                    m_LocalModifierLookups = GetBufferLookup<LocalModifierData>(true),
+                    m_SchoolLookups = GetComponentLookup<SchoolData>(true),
+
+                    m_LayerWellbeingEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_wellbeing", out var wb) && wb.Enabled,
+                    m_LayerPoliceEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_police", out var pc) && pc.Enabled,
+                    m_LayerFireEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_fire", out var fp) && fp.Enabled,
+                    m_LayerParksEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_parks", out var pk) && pk.Enabled,
+                    m_LayerHealthcareEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_healthcare", out var hc) && hc.Enabled,
+                    m_LayerTelecomEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_telecom", out var tc) && tc.Enabled,
+                    m_LayerPostEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_post", out var ps) && ps.Enabled,
+                    m_LayerEduElementaryEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_edu_elementary", out var ee) && ee.Enabled,
+                    m_LayerEduHighschoolEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_edu_highschool", out var eh) && eh.Enabled,
+                    m_LayerEduCollegeEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_edu_college", out var ec) && ec.Enabled,
+                    m_LayerEduUniversityEnabled = m_UISystem.TryGetGlobalLayerSetting("layer_edu_university", out var eu) && eu.Enabled,
+
+                    m_DrawList = drawList
+                };
+
+                JobHandle jobHandle = job.Schedule(m_BuildingQuery, dependencies);
+                jobHandle.Complete(); // Instant compilation & execution on background threads
+
+                for (int i = 0; i < drawList.Length; i++)
+                {
+                    var item = drawList[i];
+                    string layerId = GetLayerIdFromCategoryIndex(item.m_Category);
+                    if (layerId != null && m_UISystem.TryGetGlobalLayerSetting(layerId, out var setting) && setting.Enabled)
                     {
-                        ProcessGlobalPrefab(prefabRefs[i].m_Prefab, transforms[i].m_Position, preset, ref overlayBuffer);
+                        float opacityMult = Mod.Settings != null ? (Mod.Settings.Opacity / 100f) : 0.5f;
+                        UnityEngine.Color baseColor = setting.Color;
+                        baseColor.a = setting.Opacity;
+                        float highlightRadius = Mod.Settings != null ? Mod.Settings.GlobalCircleSize : 100f;
+                        DrawGlobalRings(baseColor, item.m_Position, highlightRadius, opacityMult, preset, ref overlayBuffer);
                     }
                 }
-            } finally {
-                chunks.Dispose();
+
+                drawList.Dispose();
             }
 
             // Pass 3: Floating Stats (Text labels)
@@ -128,6 +349,49 @@ namespace Area_of_Effect
             }
 
             m_OverlayRenderSystem.AddBufferWriter(dependencies);
+        }
+
+        private string GetLayerIdFromCategoryIndex(int index)
+        {
+            switch (index)
+            {
+                case 0: return "layer_wellbeing";
+                case 1: return "layer_police";
+                case 2: return "layer_fire";
+                case 3: return "layer_parks";
+                case 4: return "layer_healthcare";
+                case 5: return "layer_telecom";
+                case 6: return "layer_post";
+                case 7: return "layer_edu_elementary";
+                case 8: return "layer_edu_highschool";
+                case 9: return "layer_edu_college";
+                case 10: return "layer_edu_university";
+                default: return null;
+            }
+        }
+
+        private static string GetLabelString(int type)
+        {
+            switch (type)
+            {
+                case 1: return "Well-being";
+                case 2: return "Meals";
+                case 3: return "Attractiveness";
+                case 4: return "Telecom Range";
+                default: return "Healthcare";
+            }
+        }
+
+        private static string GetIconString(int type)
+        {
+            switch (type)
+            {
+                case 1: return "Wellbeing";
+                case 2: return "Meals";
+                case 3: return "Parks";
+                case 4: return "Telecom";
+                default: return "Healthcare";
+            }
         }
 
         public void ClearStatsCache()
@@ -167,14 +431,10 @@ namespace Area_of_Effect
                     if (mod.m_Radius.max > 0)
                     {
                         string modName = mod.m_Type.ToString();
-                        UnityEngine.Color defaultColor = new UnityEngine.Color(1f, 1f, 0f, 0.5f);
-                        if (modName.Contains("Pollution")) defaultColor = new UnityEngine.Color(0.5f, 0.3f, 0f, 0.5f);
-                        if (modName.Contains("Noise")) defaultColor = new UnityEngine.Color(1f, 0f, 0f, 0.5f);
                         if (modName.Contains("Wellbeing")) {
-                            modName = "Well-being";
-                            defaultColor = new UnityEngine.Color(0f, 1f, 0f, 0.5f);
+                            UnityEngine.Color defaultColor = new UnityEngine.Color(0f, 1f, 0f, 0.5f);
+                            DrawLocalEffect("LocalModifier_Wellbeing", "Well-being Modifier", defaultColor, mod.m_Radius.max, position, ref overlayBuffer);
                         }
-                        DrawLocalEffect($"LocalModifier_{modName}", modName, defaultColor, mod.m_Radius.max, position, ref overlayBuffer);
                     }
                 }
             }
@@ -194,48 +454,6 @@ namespace Area_of_Effect
                 c.a = Mathf.Clamp01(setting.Opacity * globalOpacity);
                 overlayBuffer.DrawCircle(c, center, radius);
             }
-        }
-
-        // ---- GLOBAL LAYERS (All buildings on map) ----
-
-        private string GetEducationLayerId(Entity prefabEntity)
-        {
-            if (!EntityManager.HasComponent<SchoolData>(prefabEntity)) return null;
-            SchoolData sd = EntityManager.GetComponentData<SchoolData>(prefabEntity);
-            int lvl = (int)sd.m_EducationLevel;
-            if (lvl <= 1) return "layer_edu_elementary";
-            if (lvl == 2) return "layer_edu_highschool";
-            if (lvl == 3) return "layer_edu_college";
-            return "layer_edu_university";
-        }
-
-        private string GetGlobalCategory(Entity prefabEntity)
-        {
-            string eduId = GetEducationLayerId(prefabEntity);
-            if (eduId != null) return eduId;
-            if (EntityManager.HasComponent<PoliceStationData>(prefabEntity)) return "layer_police";
-            if (EntityManager.HasComponent<FireStationData>(prefabEntity)) return "layer_fire";
-            if (EntityManager.HasComponent<ParkData>(prefabEntity)) return "layer_parks";
-            if (EntityManager.HasComponent<HospitalData>(prefabEntity)) return "layer_healthcare";
-            if (EntityManager.HasComponent<TelecomFacilityData>(prefabEntity)) return "layer_telecom";
-            if (EntityManager.HasComponent<PostFacilityData>(prefabEntity)) return "layer_post";
-            if (EntityManager.HasComponent<LocalModifierData>(prefabEntity)) return "layer_wellbeing";
-            return null;
-        }
-
-        private void ProcessGlobalPrefab(Entity prefabEntity, float3 position, int preset, ref OverlayRenderSystem.Buffer overlayBuffer)
-        {
-            string categoryId = GetGlobalCategory(prefabEntity);
-            if (categoryId == null) return;
-            if (!m_UISystem.TryGetGlobalLayerSetting(categoryId, out var setting) || !setting.Enabled) return;
-
-            float opacityMult = Mod.Settings != null ? (Mod.Settings.Opacity / 100f) : 0.5f;
-            UnityEngine.Color baseColor = setting.Color;
-            baseColor.a = setting.Opacity;
-
-            float highlightRadius = Mod.Settings != null ? Mod.Settings.GlobalCircleSize : 100f; 
-            
-            DrawGlobalRings(baseColor, position, highlightRadius, opacityMult, (int)preset, ref overlayBuffer);
         }
 
         private void DrawGlobalRings(UnityEngine.Color baseColor, float3 position, float radius, float opacityMult, int preset, ref OverlayRenderSystem.Buffer overlayBuffer)
@@ -299,83 +517,46 @@ namespace Area_of_Effect
                 m_FramesSinceLastStatUpdate = 0;
                 m_CachedStats.Clear();
 
-                var prefabType = GetComponentTypeHandle<PrefabRef>(true);
-                var transformType = GetComponentTypeHandle<Transform>(true);
+                var statList = new NativeList<CachedStatItem>(Allocator.TempJob);
+
                 var localModifierLookup = GetBufferLookup<LocalModifierData>(true);
                 var attractionLookup = GetComponentLookup<AttractionData>(true);
                 var telecomLookup = GetComponentLookup<TelecomFacilityData>(true);
+                var objectLookup = GetComponentLookup<ObjectData>(true);
 
                 localModifierLookup.Update(this);
                 attractionLookup.Update(this);
                 telecomLookup.Update(this);
+                objectLookup.Update(this);
 
-                var chunks = m_BuildingQuery.ToArchetypeChunkArray(Unity.Collections.Allocator.TempJob);
+                FindFloatingStatsJob job = new FindFloatingStatsJob
+                {
+                    m_PrefabType = GetComponentTypeHandle<PrefabRef>(true),
+                    m_TransformType = GetComponentTypeHandle<Transform>(true),
+                    m_EntityType = GetEntityTypeHandle(),
+                    
+                    m_LocalModifierLookup = localModifierLookup,
+                    m_AttractionLookup = attractionLookup,
+                    m_TelecomLookup = telecomLookup,
+                    m_ObjectLookup = objectLookup,
+                    
+                    m_CameraPos = cameraPos,
+                    m_MaxDistanceSq = maxDistanceSq,
+                    m_StatList = statList
+                };
 
-                try {
-                    foreach (var chunk in chunks)
-                    {
-                        var prefabRefs = chunk.GetNativeArray(ref prefabType);
-                        var transforms = chunk.GetNativeArray(ref transformType);
-                        var entities = chunk.GetNativeArray(GetEntityTypeHandle());
+                JobHandle jobHandle = job.Schedule(m_BuildingQuery, default);
+                jobHandle.Complete(); // Instantly process in parallel using Burst
 
-                        for (int i = 0; i < chunk.Count; i++)
-                        {
-                            float3 worldPos = transforms[i].m_Position;
-                            float distSq = math.distancesq(worldPos, cameraPos);
-                            if (distSq > maxDistanceSq) continue;
-
-                            Entity buildingEntity = entities[i];
-                            Entity prefab = prefabRefs[i].m_Prefab;
-                            
-                            // 1. Efficiency
-                            if (EntityManager.HasComponent<Game.Buildings.Efficiency>(buildingEntity)) {
-                                // In some versions it might be a component, in others a buffer. 
-                                // We will skip the complex buffer calc for now to fix build.
-                            }
-
-                            // 2. Local Modifiers (Wellbeing, Health, Meals)
-                            if (localModifierLookup.HasBuffer(prefab))
-                            {
-                                var modifiers = localModifierLookup[prefab];
-                                foreach (var mod in modifiers)
-                                {
-                                    if (mod.m_Delta.max > 0) {
-                                        string label = mod.m_Type.ToString();
-                                        string icon = "Healthcare";
-                                        if (mod.m_Type == Game.Buildings.LocalModifierType.Wellbeing) {
-                                            label = "Well-being";
-                                            icon = "Wellbeing";
-                                            // Heuristic: If it has Wellbeing but it's a restaurant/commercial, call it "Meals"
-                                            if (EntityManager.HasComponent<Game.Prefabs.ObjectData>(prefab)) { // Generic check
-                                                label = "Meals";
-                                                icon = "Meals";
-                                            }
-                                        }
-                                        m_CachedStats.Add(new CachedStat { worldPos = worldPos, label = label, value = mod.m_Delta.max, icon = icon });
-                                    }
-                                }
-                            }
-
-                            // 3. Attraction
-                            if (attractionLookup.HasComponent(prefab))
-                            {
-                                var attr = attractionLookup[prefab];
-                                if (attr.m_Attractiveness > 0)
-                                    m_CachedStats.Add(new CachedStat { worldPos = worldPos, label = "Attractiveness", value = attr.m_Attractiveness, icon = "Parks" });
-                            }
-                            
-                            // 4. Telecom
-                            if (telecomLookup.HasComponent(prefab))
-                            {
-                                var tel = telecomLookup[prefab];
-                                if (tel.m_Range > 0)
-                                    m_CachedStats.Add(new CachedStat { worldPos = worldPos, label = "Telecom Range", value = tel.m_Range, icon = "Telecom" });
-                            }
-                        }
-                    }
-                } finally {
-                    chunks.Dispose();
+                for (int i = 0; i < statList.Length; i++)
+                {
+                    var item = statList[i];
+                    string label = GetLabelString(item.m_LabelType);
+                    string icon = GetIconString(item.m_IconType);
+                    m_CachedStats.Add(new CachedStat { worldPos = item.m_Position, label = label, value = item.m_Value, icon = icon });
                 }
+
+                statList.Dispose();
             }
 
             float overlayHeight = Mod.Settings != null ? Mod.Settings.OverlayHeight : 10f;
@@ -386,7 +567,7 @@ namespace Area_of_Effect
                 if (!groupedStats.ContainsKey(stat.worldPos))
                     groupedStats[stat.worldPos] = new List<AreaOfEffectUISystem.StatEntry>();
                 
-                string hex = "#ffffff";
+                string hex = "ffffff";
                 string layerId = "";
                 if (stat.label == "Well-being") layerId = "layer_wellbeing";
                 else if (stat.label == "Attractiveness") layerId = "layer_parks";

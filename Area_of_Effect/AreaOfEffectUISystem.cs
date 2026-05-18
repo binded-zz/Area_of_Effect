@@ -68,8 +68,6 @@ namespace Area_of_Effect
 
         private ValueBinding<string> m_LocalSettingsBinding;
         private ValueBinding<string> m_GlobalSettingsBinding;
-        private ValueBinding<bool> m_ShowTopButtonBinding;
-        private ValueBinding<string> m_ButtonSideBinding;
         private ValueBinding<bool> m_IsPanelOpenBinding;
         private ValueBinding<float> m_OpacityBinding;
         private ValueBinding<int> m_PresetBinding;
@@ -77,7 +75,6 @@ namespace Area_of_Effect
         private ValueBinding<float> m_HeightBinding;
         private ValueBinding<bool> m_ShowStatsBinding;
         private ValueBinding<float> m_MaxDistanceBinding;
-        private ValueBinding<int> m_LayoutModeBinding;
         private ValueBinding<bool> m_HighVisBinding;
         private RawValueBinding m_FloatingStatsBinding;
         private ValueBinding<string> m_SelectedBuildingNameBinding;
@@ -96,8 +93,6 @@ namespace Area_of_Effect
 
             AddBinding(m_LocalSettingsBinding   = new ValueBinding<string>("area_of_effect", "localSettings", "[]"));
             AddBinding(m_GlobalSettingsBinding  = new ValueBinding<string>("area_of_effect", "globalSettings", "[]"));
-            AddBinding(m_ShowTopButtonBinding   = new ValueBinding<bool>  ("area_of_effect", "showTopButton", Mod.Settings?.ShowTopButton ?? true));
-            AddBinding(m_ButtonSideBinding      = new ValueBinding<string>("area_of_effect", "buttonSide", Mod.Settings?.ButtonSide.ToString() ?? "Left"));
             AddBinding(m_IsPanelOpenBinding     = new ValueBinding<bool>  ("area_of_effect", "isPanelOpen", false));
             AddBinding(m_OpacityBinding         = new ValueBinding<float> ("area_of_effect", "opacity", (float)opacity));
             AddBinding(m_PresetBinding          = new ValueBinding<int>   ("area_of_effect", "preset", preset));
@@ -105,7 +100,6 @@ namespace Area_of_Effect
             AddBinding(m_HeightBinding          = new ValueBinding<float> ("area_of_effect", "overlayHeight", (float)(Mod.Settings?.OverlayHeight ?? 1)));
             AddBinding(m_ShowStatsBinding       = new ValueBinding<bool>  ("area_of_effect", "showStats", Mod.Settings?.ShowStats ?? true));
             AddBinding(m_MaxDistanceBinding     = new ValueBinding<float> ("area_of_effect", "maxDistance", (float)(Mod.Settings?.LabelDistance ?? 200)));
-            AddBinding(m_LayoutModeBinding      = new ValueBinding<int>   ("area_of_effect", "layoutMode", (int)(Mod.Settings?.LayoutMode ?? ModSettings.ModSettings.UILayoutMode.Card)));
             AddBinding(m_HighVisBinding         = new ValueBinding<bool>  ("area_of_effect", "highVis", Mod.Settings?.HighVis ?? false));
             AddBinding(m_FloatingStatsBinding   = new RawValueBinding     ("area_of_effect", "floatingStats", WriteFloatingStats));
             AddBinding(m_SelectedBuildingNameBinding = new ValueBinding<string>("area_of_effect", "buildingName", ""));
@@ -128,11 +122,7 @@ namespace Area_of_Effect
                 m_IsPanelOpenBinding.Update(!m_IsPanelOpenBinding.value);
             }));
             
-            AddBinding(new TriggerBinding<int>("area_of_effect", "setLayoutMode", (m) => {
-                int safeM = Mathf.Clamp(m, 0, 3);
-                m_LayoutModeBinding.Update(safeM);
-                if (Mod.Settings != null) { Mod.Settings.LayoutMode = (ModSettings.ModSettings.UILayoutMode)safeM; Mod.Settings.ApplyAndSave(); }
-            }));
+
 
             AddBinding(new TriggerBinding<int>("area_of_effect", "setPreset", (p) => {
                 int safeP = Mathf.Clamp(p, 0, 2);
@@ -173,8 +163,6 @@ namespace Area_of_Effect
         protected override void OnUpdate()
         {
             if (Mod.Settings == null) return;
-            if (m_ShowTopButtonBinding.value != Mod.Settings.ShowTopButton)
-                m_ShowTopButtonBinding.Update(Mod.Settings.ShowTopButton);
             int p = (int)Mod.Settings.Preset;
             if (m_PresetBinding.value != p)
                 m_PresetBinding.Update(p);
@@ -188,8 +176,6 @@ namespace Area_of_Effect
                 m_ShowStatsBinding.Update(Mod.Settings.ShowStats);
             if (m_MaxDistanceBinding.value != (float)Mod.Settings.LabelDistance)
                 m_MaxDistanceBinding.Update((float)Mod.Settings.LabelDistance);
-            if (m_LayoutModeBinding.value != (int)Mod.Settings.LayoutMode)
-                m_LayoutModeBinding.Update((int)Mod.Settings.LayoutMode);
             if (m_HighVisBinding.value != Mod.Settings.HighVis)
                 m_HighVisBinding.Update(Mod.Settings.HighVis);
         }
@@ -246,10 +232,32 @@ namespace Area_of_Effect
             RegisterGlobalLayer("layer_edu_college", "Education: College", new Color(1f, 0.6f, 0.3f, 1f));
             RegisterGlobalLayer("layer_edu_university", "Education: University", new Color(1f, 0.4f, 0.2f, 1f));
             RegisterGlobalLayer("layer_pollution", "Pollution Producer", new Color(0.5f, 0.4f, 0.2f, 1f));
+
+            // Pre-register all Local Effects so that they are always configurable and visible in the UI settings panel
+            RegisterLocalEffectType("CoverageData", "Coverage", new Color(0f, 1f, 0f, 0.5f));
+            RegisterLocalEffectType("LocalModifier_Wellbeing", "Well-being Modifier", new Color(0f, 1f, 0f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_Crime", "Crime Modifier", new Color(1f, 0f, 0f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_Health", "Health Modifier", new Color(1f, 0.5f, 0.5f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_ForestFireHazard", "Forest Fire Hazard", new Color(1f, 0.5f, 0f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_GroundPollution", "Ground Pollution", new Color(0.5f, 0.3f, 0f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_AirPollution", "Air Pollution", new Color(0.4f, 0.4f, 0.4f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_NoisePollution", "Noise Pollution", new Color(0.8f, 0.4f, 0.2f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_CrimeAccumulation", "Crime Accumulation", new Color(0.7f, 0.1f, 0.1f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_MailAccumulation", "Mail Accumulation", new Color(0.9f, 0.7f, 0.1f, 0.5f));
+            // RegisterLocalEffectType("LocalModifier_GarbageAccumulation", "Garbage Accumulation", new Color(0.3f, 0.3f, 0.3f, 0.5f));
         }
 
         public bool TryGetLocalEffectSetting(string id, out EffectSetting s) => m_LocalSettings.TryGetValue(id, out s);
         public bool TryGetGlobalLayerSetting(string id, out EffectSetting s) => m_GlobalSettings.TryGetValue(id, out s);
+
+        public bool IsAnyGlobalLayerActive()
+        {
+            foreach (var kv in m_GlobalSettings)
+            {
+                if (kv.Value.Enabled) return true;
+            }
+            return false;
+        }
 
         private void ToggleLocal(string id, bool on) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Enabled = on; m_LocalSettingsBinding.Update(SerializeDict(m_LocalSettings)); } }
         private void ToggleAllLocal(bool on) { foreach (var kv in m_LocalSettings) kv.Value.Enabled = on; m_LocalSettingsBinding.Update(SerializeDict(m_LocalSettings)); }

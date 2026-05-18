@@ -16,23 +16,15 @@ namespace Area_of_Effect.ModSettings
         public const string kSection = "Main";
         public const string kMainGroup = "AreaOfEffectSettings";
 
-        public enum NavBarSide { Left, Right }
+
         public enum VisualPreset { Rings, Glow, Classic }
-        public enum UILayoutMode { Card, Sidebar, Floating, Grid }
 
         public ModSettings(IMod mod) : base(mod) { SetDefaults(); }
 
         [SettingsUISection(kSection, kMainGroup)]
         public bool IsEnabled { get; set; } = true;
 
-        [SettingsUISection(kSection, kMainGroup)]
-        public UILayoutMode LayoutMode { get; set; } = UILayoutMode.Card;
 
-        [SettingsUISection(kSection, kMainGroup)]
-        public bool ShowTopButton { get; set; } = true;
-
-        [SettingsUISection(kSection, kMainGroup)]
-        public NavBarSide ButtonSide { get; set; } = NavBarSide.Left;
 
         [SettingsUISlider(min = 10, max = 100, step = 10, scalarMultiplier = 1, unit = Unit.kPercentage)]
         [SettingsUISection(kSection, kMainGroup)]
@@ -62,9 +54,6 @@ namespace Area_of_Effect.ModSettings
         public override void SetDefaults()
         {
             IsEnabled = true;
-            LayoutMode = UILayoutMode.Card;
-            ShowTopButton = true;
-            ButtonSide = NavBarSide.Left;
             Opacity = 50;
             Preset = VisualPreset.Rings;
             GlobalCircleSize = 100;
@@ -89,18 +78,7 @@ namespace Area_of_Effect.ModSettings
                 { m_Setting.GetOptionGroupLocaleID(ModSettings.kMainGroup), "Area of Effect Settings" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(ModSettings.IsEnabled)), "Enable Mod" },
                 { m_Setting.GetOptionDescLocaleID(nameof(ModSettings.IsEnabled)), "Turn the Area of Effect overlay on or off." },
-                { m_Setting.GetOptionLabelLocaleID(nameof(ModSettings.LayoutMode)), "UI Layout Mode" },
-                { m_Setting.GetOptionDescLocaleID(nameof(ModSettings.LayoutMode)), "Choose between different UI styles (Card, Sidebar, Floating, Grid)." },
-                { m_Setting.GetEnumValueLocaleID(ModSettings.UILayoutMode.Card), "Option A: Card" },
-                { m_Setting.GetEnumValueLocaleID(ModSettings.UILayoutMode.Sidebar), "Option B: Sidebar" },
-                { m_Setting.GetEnumValueLocaleID(ModSettings.UILayoutMode.Floating), "Option C: Floating" },
-                { m_Setting.GetEnumValueLocaleID(ModSettings.UILayoutMode.Grid), "Option D: Grid" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(ModSettings.ShowTopButton)), "Show Floating Button" },
-                { m_Setting.GetOptionDescLocaleID(nameof(ModSettings.ShowTopButton)), "Show a floating button in the navigation bar." },
-                { m_Setting.GetOptionLabelLocaleID(nameof(ModSettings.ButtonSide)), "Button Side" },
-                { m_Setting.GetOptionDescLocaleID(nameof(ModSettings.ButtonSide)), "Which side to place the floating button." },
-                { m_Setting.GetEnumValueLocaleID(ModSettings.NavBarSide.Left), "Top Left" },
-                { m_Setting.GetEnumValueLocaleID(ModSettings.NavBarSide.Right), "Top Right" },
+
                 { m_Setting.GetOptionLabelLocaleID(nameof(ModSettings.Opacity)), "Overlay Opacity" },
                 { m_Setting.GetOptionDescLocaleID(nameof(ModSettings.Opacity)), "Adjust the transparency of area of effect circles." },
                 { m_Setting.GetOptionLabelLocaleID(nameof(ModSettings.Preset)), "Visual Preset" },
