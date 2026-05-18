@@ -509,7 +509,7 @@ namespace Area_of_Effect
             float3 cameraPos = m_CameraUpdateSystem.position;
             Camera cam = m_CameraUpdateSystem.activeCamera;
             
-            float maxDist = Mod.Settings != null ? Mod.Settings.LabelDistance : 200f;
+            float maxDist = Mod.Settings != null ? Mod.Settings.LabelDistance : 1500f;
             float maxDistanceSq = maxDist * maxDist;
 
             m_FramesSinceLastStatUpdate++;

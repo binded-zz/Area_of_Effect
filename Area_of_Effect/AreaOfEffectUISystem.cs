@@ -99,7 +99,7 @@ namespace Area_of_Effect
             AddBinding(m_SizeBinding            = new ValueBinding<float> ("area_of_effect", "circleSize", (float)(Mod.Settings?.GlobalCircleSize ?? 100)));
             AddBinding(m_HeightBinding          = new ValueBinding<float> ("area_of_effect", "overlayHeight", (float)(Mod.Settings?.OverlayHeight ?? 1)));
             AddBinding(m_ShowStatsBinding       = new ValueBinding<bool>  ("area_of_effect", "showStats", Mod.Settings?.ShowStats ?? true));
-            AddBinding(m_MaxDistanceBinding     = new ValueBinding<float> ("area_of_effect", "maxDistance", (float)(Mod.Settings?.LabelDistance ?? 200)));
+            AddBinding(m_MaxDistanceBinding     = new ValueBinding<float> ("area_of_effect", "maxDistance", (float)(Mod.Settings?.LabelDistance ?? 1500)));
             AddBinding(m_HighVisBinding         = new ValueBinding<bool>  ("area_of_effect", "highVis", Mod.Settings?.HighVis ?? false));
             AddBinding(m_FloatingStatsBinding   = new RawValueBinding     ("area_of_effect", "floatingStats", WriteFloatingStats));
             AddBinding(m_SelectedBuildingNameBinding = new ValueBinding<string>("area_of_effect", "buildingName", ""));
@@ -149,7 +149,7 @@ namespace Area_of_Effect
                 if (Mod.Settings != null) { Mod.Settings.ShowStats = val; Mod.Settings.ApplyAndSave(); }
             }));
             AddBinding(new TriggerBinding<float>("area_of_effect", "setMaxDistance", (d) => {
-                float safeD = Mathf.Clamp(d, 50f, 5000f);
+                float safeD = Mathf.Clamp(d, 1000f, 3500f);
                 m_MaxDistanceBinding.Update(safeD);
                 if (Mod.Settings != null) { Mod.Settings.LabelDistance = (int)safeD; Mod.Settings.ApplyAndSave(); }
                 World.GetOrCreateSystemManaged<AreaOfEffectSystem>().ClearStatsCache();

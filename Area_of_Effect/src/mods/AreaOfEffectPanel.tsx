@@ -422,7 +422,7 @@ export const AreaOfEffectPanel: React.FC = () => {
                     </div>
                     <SettingsToggleRow label="Display Stat Bubbles" checked={showStats} onChange={() => trigger('area_of_effect', 'setShowStats', !showStats)} />
                     <SettingsToggleRow label="High Visibility Mode" checked={highVis} onChange={() => trigger('area_of_effect', 'setHighVis', !highVis)} />
-                    <SettingsSliderRow label="Max Label Distance" value={maxDistance} min={50} max={5000} unit="m" onChange={(v) => trigger('area_of_effect', 'setMaxDistance', v)} />
+                    <SettingsSliderRow label="Max Label Distance" value={maxDistance} min={1000} max={3500} unit="m" onChange={(v) => trigger('area_of_effect', 'setMaxDistance', v)} />
                 </div>
             </div>
 

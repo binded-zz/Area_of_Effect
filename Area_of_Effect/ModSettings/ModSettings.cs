@@ -41,9 +41,9 @@ namespace Area_of_Effect.ModSettings
         [SettingsUISection(kSection, kMainGroup)]
         public int OverlayHeight { get; set; } = 1;
 
-        [SettingsUISlider(min = 50, max = 2000, step = 50)]
+        [SettingsUISlider(min = 1000, max = 3500, step = 50)]
         [SettingsUISection(kSection, kMainGroup)]
-        public int LabelDistance { get; set; } = 200;
+        public int LabelDistance { get; set; } = 1500;
 
         [SettingsUISection(kSection, kMainGroup)]
         public bool ShowStats { get; set; } = true;
@@ -58,7 +58,7 @@ namespace Area_of_Effect.ModSettings
             Preset = VisualPreset.Rings;
             GlobalCircleSize = 100;
             OverlayHeight = 1;
-            LabelDistance = 200;
+            LabelDistance = 1500;
             ShowStats = true;
             HighVis = false;
         }
