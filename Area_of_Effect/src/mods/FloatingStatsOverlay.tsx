@@ -58,7 +58,10 @@ export const FloatingStatsOverlay: React.FC = () => {
                         >
                             <div className={styles.multiStatBubble}>
                                 {stat.entries.filter((entry, idx, arr) => arr.findIndex(e => e.label === entry.label) === idx).map((entry, j) => {
-                                    const safeColor = toHexColor(entry.color);
+                                    const parsedColor = toHexColor(entry.color);
+                                    // Default C# missing color is white. Let's make Meals a nicer orange.
+                                    const safeColor = (parsedColor.toLowerCase() === '#ffffff' && entry.label === 'Meals') ? '#ffb84d' : parsedColor;
+                                    
                                     // HighVis mode forces text/icons to be perfectly readable instead of using the custom color
                                     const displayColor = highVis ? '#000000' : safeColor;
                                     const valColor = highVis ? '#008800' : safeColor;

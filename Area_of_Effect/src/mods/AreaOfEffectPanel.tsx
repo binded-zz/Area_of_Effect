@@ -62,6 +62,128 @@ const globalSize$ = bindValue<number>('area_of_effect', 'circleSize', 500);
 const globalHeight$ = bindValue<number>('area_of_effect', 'overlayHeight', 0);
 const preset$ = bindValue<number>('area_of_effect', 'preset', 0);
 
+// ── Component Helpers (Extracted to prevent re-renders) ──────────────
+const LayerRow = React.memo<{
+    layer: LayerSetting;
+    onToggle: (id: string, enabled: boolean) => void;
+    onAlpha: (id: string, val: number) => void;
+    onColor: (id: string, hex: string) => void;
+}>(({ layer, onToggle, onAlpha, onColor }) => {
+    const Slider = VanillaComponentResolver.instance?.Slider || (() => null);
+    const ColorField = VanillaComponentResolver.instance?.ColorField || (() => null);
+    const color = layerToHex(layer);
+    
+    // Controlled locally so it moves instantly, but C# data is sent instantly too
+    const [displayColor, setDisplayColor] = React.useState({ r: layer.r, g: layer.g, b: layer.b, a: layer.a });
+    const [displayOpacity, setDisplayOpacity] = React.useState((layer.opacity || 0) * 100);
+
+    React.useEffect(() => {
+        setDisplayColor({ r: layer.r, g: layer.g, b: layer.b, a: layer.a });
+        setDisplayOpacity((layer.opacity || 0) * 100);
+    }, [layer]);
+
+    const handleColorChange = React.useCallback((newColor: { r: number; g: number; b: number; a: number }) => {
+        setDisplayColor(newColor);
+        const toHex = (v: number) => Math.round(v * 255).toString(16).padStart(2, '0');
+        const hex = `#${toHex(newColor.r)}${toHex(newColor.g)}${toHex(newColor.b)}`;
+        onColor(layer.id, hex);
+    }, [layer.id, onColor]);
+
+    const handleAlphaChange = React.useCallback((val: number) => {
+        setDisplayOpacity(val);
+        onAlpha(layer.id, val);
+    }, [layer.id, onAlpha]);
+
+    return (
+        <div style={{ marginBottom: '8rem', paddingBottom: '6rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            {/* Row 1: Toggle + Icon + Clickable Name (with invisible ColorField overlay) */}
+            <div className={styles.layerRowNative}>
+                <AoeToggle checked={layer.enabled} onChange={() => onToggle(layer.id, layer.enabled)} />
+                <div className={styles.layerIconWrapNative}>
+                    <Icon name={layer.id} color={color} size={22} />
+                </div>
+                
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <div className={styles.bracketLabelNative} style={{ color }}>
+                        {layer.name}
+                    </div>
+                    {/* Invisible ColorField that intercepts the click and opens the picker */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}>
+                        <ColorField
+                            value={displayColor}
+                            onChange={handleColorChange}
+                        />
+                    </div>
+                </div>
+            </div>
+            {/* Row 2: Opacity slider */}
+            <div className={styles.layerRowNative} style={{ paddingLeft: '52rem' }}>
+                <span className={styles.statRowLabel}>Opacity</span>
+                <div className={styles.sliderContainerNative}>
+                    <div className={styles.sliderWrap}>
+                        <Slider value={displayOpacity} start={0} end={100} onChange={handleAlphaChange} />
+                    </div>
+                    <span className={styles.sliderValText}>{Math.round(displayOpacity)}%</span>
+                </div>
+            </div>
+        </div>
+    );
+});
+
+const SectionHeader: React.FC<{
+    title: string;
+    collapsed: boolean;
+    onCollapse: () => void;
+    allEnabled?: boolean;
+    onToggleAll?: () => void;
+}> = ({ title, collapsed, onCollapse, allEnabled, onToggleAll }) => (
+    <div className={styles.cardHeader} style={{ cursor: 'pointer', userSelect: 'none' }}>
+        <span className={styles.sectionTitle} onClick={onCollapse} style={{ flexGrow: 1 }}>
+            {collapsed ? '▶' : '▼'} {title}
+        </span>
+        {onToggleAll !== undefined && allEnabled !== undefined && (
+            <AoeToggle checked={allEnabled} onChange={onToggleAll} />
+        )}
+    </div>
+);
+
+const SettingsSliderRow = React.memo<{
+    label: string; value: number; min: number; max: number; unit: string; onChange: (v: number) => void;
+}>(({ label, value, min, max, unit, onChange }) => {
+    const Slider = VanillaComponentResolver.instance?.Slider || (() => null);
+    const [displayVal, setDisplayVal] = React.useState(value);
+
+    React.useEffect(() => {
+        setDisplayVal(value);
+    }, [value]);
+
+    const handleSliderChange = React.useCallback((val: number) => {
+        setDisplayVal(val);
+        onChange(val);
+    }, [onChange]);
+
+    return (
+        <div className={styles.layerRowNative} style={{ marginBottom: '6rem' }}>
+            <span className={styles.statRowLabel} style={{ width: '120rem', minWidth: '120rem' }}>{label}</span>
+            <div className={styles.sliderContainerNative}>
+                <div className={styles.sliderWrap}>
+                    <Slider value={displayVal} start={min} end={max} onChange={handleSliderChange} />
+                </div>
+                <span className={styles.sliderValText}>{Math.round(displayVal)}{unit}</span>
+            </div>
+        </div>
+    );
+});
+
+const SettingsToggleRow: React.FC<{
+    label: string; checked: boolean; onChange: () => void;
+}> = ({ label, checked, onChange }) => (
+    <div className={styles.layerRowNative} style={{ marginBottom: '8rem' }}>
+        <span className={styles.statRowLabel} style={{ flexGrow: 1 }}>{label}</span>
+        <AoeToggle checked={checked} onChange={onChange} />
+    </div>
+);
+
 // ─── Main Panel Component ────────────────────────────────────────────────────
 export const AreaOfEffectPanel: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'layers' | 'settings'>('layers');
@@ -164,126 +286,7 @@ export const AreaOfEffectPanel: React.FC = () => {
     const handleGlobalAlpha = useCallback((id: string, val: number) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerAlpha', id, val / 100); }, [markDragging]);
     const handleGlobalColor = useCallback((id: string, hex: string) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerColor', id, hex); }, [markDragging]);
 
-    // ── Layer Row ────────────────────────────────────────────────────────
-    const LayerRow = React.memo<{
-        layer: LayerSetting;
-        onToggle: (id: string, enabled: boolean) => void;
-        onAlpha: (id: string, val: number) => void;
-        onColor: (id: string, hex: string) => void;
-    }>(({ layer, onToggle, onAlpha, onColor }) => {
-        const color = layerToHex(layer);
-        
-        // Controlled locally so it moves instantly, but C# data is sent instantly too
-        const [displayColor, setDisplayColor] = useState({ r: layer.r, g: layer.g, b: layer.b, a: layer.a });
-        const [displayOpacity, setDisplayOpacity] = useState((layer.opacity || 0) * 100);
 
-        React.useEffect(() => {
-            setDisplayColor({ r: layer.r, g: layer.g, b: layer.b, a: layer.a });
-            setDisplayOpacity((layer.opacity || 0) * 100);
-        }, [layer]);
-
-        const handleColorChange = useCallback((newColor: { r: number; g: number; b: number; a: number }) => {
-            setDisplayColor(newColor);
-            const toHex = (v: number) => Math.round(v * 255).toString(16).padStart(2, '0');
-            const hex = `#${toHex(newColor.r)}${toHex(newColor.g)}${toHex(newColor.b)}`;
-            onColor(layer.id, hex);
-        }, [layer.id, onColor]);
-
-        const handleAlphaChange = useCallback((val: number) => {
-            setDisplayOpacity(val);
-            onAlpha(layer.id, val);
-        }, [layer.id, onAlpha]);
-
-        return (
-            <div style={{ marginBottom: '8rem', paddingBottom: '6rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                {/* Row 1: Toggle + Icon + Clickable Name (with invisible ColorField overlay) */}
-                <div className={styles.layerRowNative}>
-                    <AoeToggle checked={layer.enabled} onChange={() => onToggle(layer.id, layer.enabled)} />
-                    <div className={styles.layerIconWrapNative}>
-                        <Icon name={layer.id} color={color} size={22} />
-                    </div>
-                    
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <div className={styles.bracketLabelNative} style={{ color }}>
-                            {layer.name}
-                        </div>
-                        {/* Invisible ColorField that intercepts the click and opens the picker */}
-                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}>
-                            <ColorField
-                                value={displayColor}
-                                onChange={handleColorChange}
-                            />
-                        </div>
-                    </div>
-                </div>
-                {/* Row 2: Opacity slider */}
-                <div className={styles.layerRowNative} style={{ paddingLeft: '52rem' }}>
-                    <span className={styles.statRowLabel}>Opacity</span>
-                    <div className={styles.sliderContainerNative}>
-                        <div className={styles.sliderWrap}>
-                            <Slider value={displayOpacity} start={0} end={100} onChange={handleAlphaChange} />
-                        </div>
-                        <span className={styles.sliderValText}>{Math.round(displayOpacity)}%</span>
-                    </div>
-                </div>
-            </div>
-        );
-    });
-
-    // ── Collapsible Section Header ───────────────────────────────────────
-    const SectionHeader: React.FC<{
-        title: string;
-        collapsed: boolean;
-        onCollapse: () => void;
-        allEnabled?: boolean;
-        onToggleAll?: () => void;
-    }> = ({ title, collapsed, onCollapse, allEnabled, onToggleAll }) => (
-        <div className={styles.cardHeader} style={{ cursor: 'pointer', userSelect: 'none' }}>
-            <span className={styles.sectionTitle} onClick={onCollapse} style={{ flexGrow: 1 }}>
-                {collapsed ? '▶' : '▼'} {title}
-            </span>
-            {onToggleAll !== undefined && allEnabled !== undefined && (
-                <AoeToggle checked={allEnabled} onChange={onToggleAll} />
-            )}
-        </div>
-    );
-
-    // ── Settings Row helpers ─────────────────────────────────────────────
-    const SettingsSliderRow = React.memo<{
-        label: string; value: number; min: number; max: number; unit: string; onChange: (v: number) => void;
-    }>(({ label, value, min, max, unit, onChange }) => {
-        const [displayVal, setDisplayVal] = useState(value);
-
-        React.useEffect(() => {
-            setDisplayVal(value);
-        }, [value]);
-
-        const handleSliderChange = useCallback((val: number) => {
-            setDisplayVal(val);
-            onChange(val);
-        }, [onChange]);
-
-        return (
-            <div className={styles.layerRowNative} style={{ marginBottom: '6rem' }}>
-                <span className={styles.statRowLabel} style={{ width: '120rem', minWidth: '120rem' }}>{label}</span>
-                <div className={styles.sliderContainerNative}>
-                    <div className={styles.sliderWrap}>
-                        <Slider value={displayVal} start={min} end={max} onChange={handleSliderChange} />
-                    </div>
-                    <span className={styles.sliderValText}>{Math.round(displayVal)}{unit}</span>
-                </div>
-            </div>
-        );
-    });
-
-    const SettingsToggleRow: React.FC<{
-        label: string; checked: boolean; onChange: () => void;
-    }> = ({ label, checked, onChange }) => (
-        <div className={styles.layerRowNative} style={{ marginBottom: '8rem' }}>
-            <span className={styles.statRowLabel} style={{ flexGrow: 1 }}>{label}</span>
-            <AoeToggle checked={checked} onChange={onChange} />
-        </div>
-    );
 
     // ── LAYERS TAB ───────────────────────────────────────────────────────
     const renderLayersTab = () => (

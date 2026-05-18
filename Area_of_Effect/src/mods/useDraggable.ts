@@ -1,11 +1,18 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
-export const useDraggable = (initialPosition: { x: number, y: number }) => {
-    const [position, setPosition] = useState(initialPosition);
+export const useDraggable = (id: string, initialPosition: { x: number, y: number }) => {
+    // Load from localStorage or use initial
+    const [position, setPosition] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`aoe_window_${id}`);
+            if (saved) return JSON.parse(saved);
+        } catch {}
+        return initialPosition;
+    });
+
     const dragState = useRef<{ startX: number; startY: number; posX: number; posY: number } | null>(null);
 
     const onMouseDown = useCallback((e: React.MouseEvent) => {
-        // Only start drag on left button
         if (e.button !== 0) return;
 
         const startX = e.clientX;
@@ -31,10 +38,16 @@ export const useDraggable = (initialPosition: { x: number, y: number }) => {
             document.removeEventListener('mouseup', onMouseUp);
         };
 
-        // Only add listeners when actively dragging
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
     }, [position]);
+
+    // Save to localStorage on change
+    useEffect(() => {
+        try {
+            localStorage.setItem(`aoe_window_${id}`, JSON.stringify(position));
+        } catch {}
+    }, [position, id]);
 
     return { position, onMouseDown };
 };
