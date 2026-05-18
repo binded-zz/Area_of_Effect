@@ -7,9 +7,9 @@ import { ErrorBoundary } from "mods/ErrorBoundary";
 const register: ModRegistrar = (moduleRegistry) => {
     VanillaComponentResolver.setRegistry(moduleRegistry);
     
-    // Append both to GameTopLeft so they stay behind the system menus
+    // Append the button to TopLeft, but the overlay to Game so it renders behind main menus
     moduleRegistry.append('GameTopLeft', AreaOfEffectButton);
-    moduleRegistry.append('GameTopLeft', () => (
+    moduleRegistry.append('Game', () => (
         <ErrorBoundary name="Floating Stats">
             <FloatingStatsOverlay />
         </ErrorBoundary>
