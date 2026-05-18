@@ -56,6 +56,7 @@ const buildingServiceReach$ = bindValue<number>('area_of_effect', 'buildingServi
 const showStats$ = bindValue<boolean>('area_of_effect', 'showStats', true);
 const highVis$ = bindValue<boolean>('area_of_effect', 'highVis', false);
 const maxDistance$ = bindValue<number>('area_of_effect', 'maxDistance', 1000);
+const bubbleSize$ = bindValue<number>('area_of_effect', 'bubbleSize', 100);
 
 const globalOpacity$ = bindValue<number>('area_of_effect', 'opacity', 100);
 const globalSize$ = bindValue<number>('area_of_effect', 'circleSize', 500);
@@ -103,16 +104,18 @@ const LayerRow = React.memo<{
                     <div className={styles.layerIconWrapNative} style={{ margin: '0 4rem' }}>
                         <Icon name={layer.id} color={color} size={22} />
                     </div>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
-                        <div className={styles.bracketLabelNative} style={{ color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0, overflow: 'hidden', cursor: 'pointer' }}>
+                        <div className={styles.bracketLabelNative} style={{ color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexGrow: 1 }}>
                             {layer.name}
                         </div>
-                        {/* Invisible ColorField that intercepts the click and opens the picker */}
+                        {/* Invisible ColorField that intercepts the click and opens the picker, scaled to completely cover the entire text wrapper click region */}
                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}>
-                            <ColorField
-                                value={displayColor}
-                                onChange={handleColorChange}
-                            />
+                            <div style={{ transform: 'scale(25, 5)', transformOrigin: 'top left', width: '100%', height: '100%' }}>
+                                <ColorField
+                                    value={displayColor}
+                                    onChange={handleColorChange}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -259,6 +262,13 @@ export const AreaOfEffectPanel: React.FC = () => {
         return prevGlobalHeight.current;
     }, [globalHeightRaw, forceRender]);
 
+    const bubbleSizeRaw = useValue(bubbleSize$);
+    const prevBubbleSize = useRef(bubbleSizeRaw);
+    const bubbleSize = React.useMemo(() => {
+        if (!isDraggingRef.current) prevBubbleSize.current = bubbleSizeRaw;
+        return prevBubbleSize.current;
+    }, [bubbleSizeRaw, forceRender]);
+
     const localColorTimeoutsRef = useRef<Record<string, any>>({});
     const globalColorTimeoutsRef = useRef<Record<string, any>>({});
 
@@ -287,6 +297,7 @@ export const AreaOfEffectPanel: React.FC = () => {
     const handleSetOpacity = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOpacity', v); }, [markDragging]);
     const handleSetCircleSize = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setSize', v); }, [markDragging]);
     const handleSetOverlayHeight = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setHeight', v); }, [markDragging]);
+    const handleSetBubbleSize = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setBubbleSize', v); }, [markDragging]);
 
     // ── Guard: wait for native component registry (must be after all hooks) ──
     if (!VanillaComponentResolver.instance) {
@@ -438,6 +449,7 @@ export const AreaOfEffectPanel: React.FC = () => {
                     <SettingsToggleRow label="Display Stat Bubbles" checked={showStats} onChange={() => trigger('area_of_effect', 'setShowStats', !showStats)} />
                     <SettingsToggleRow label="High Visibility Mode" checked={highVis} onChange={() => trigger('area_of_effect', 'setHighVis', !highVis)} />
                     <SettingsSliderRow label="Max Label Distance" value={maxDistance} min={1000} max={3500} unit="m" onChange={(v) => trigger('area_of_effect', 'setMaxDistance', v)} />
+                    <SettingsSliderRow label="Map Bubble Size" value={bubbleSize} min={50} max={200} unit="%" onChange={handleSetBubbleSize} />
                 </div>
             </div>
 

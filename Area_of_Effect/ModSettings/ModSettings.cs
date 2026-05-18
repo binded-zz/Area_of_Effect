@@ -45,6 +45,10 @@ namespace Area_of_Effect.ModSettings
         [SettingsUISection(kSection, kMainGroup)]
         public int LabelDistance { get; set; } = 1500;
 
+        [SettingsUISlider(min = 50, max = 200, step = 5)]
+        [SettingsUISection(kSection, kMainGroup)]
+        public int BubbleSize { get; set; } = 100;
+
         [SettingsUISection(kSection, kMainGroup)]
         public bool ShowStats { get; set; } = true;
 
@@ -59,6 +63,7 @@ namespace Area_of_Effect.ModSettings
             GlobalCircleSize = 100;
             OverlayHeight = 1;
             LabelDistance = 1500;
+            BubbleSize = 100;
             ShowStats = true;
             HighVis = false;
             SavedLocalSettings = "";

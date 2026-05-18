@@ -76,6 +76,7 @@ namespace Area_of_Effect
         private ValueBinding<bool> m_ShowStatsBinding;
         private ValueBinding<float> m_MaxDistanceBinding;
         private ValueBinding<bool> m_HighVisBinding;
+        private ValueBinding<float> m_BubbleSizeBinding;
         private RawValueBinding m_FloatingStatsBinding;
         private ValueBinding<string> m_SelectedBuildingNameBinding;
         private ValueBinding<int> m_SelectedBuildingEfficiencyBinding;
@@ -104,6 +105,7 @@ namespace Area_of_Effect
             AddBinding(m_ShowStatsBinding       = new ValueBinding<bool>  ("area_of_effect", "showStats", Mod.Settings?.ShowStats ?? true));
             AddBinding(m_MaxDistanceBinding     = new ValueBinding<float> ("area_of_effect", "maxDistance", (float)(Mod.Settings?.LabelDistance ?? 1500)));
             AddBinding(m_HighVisBinding         = new ValueBinding<bool>  ("area_of_effect", "highVis", Mod.Settings?.HighVis ?? false));
+            AddBinding(m_BubbleSizeBinding       = new ValueBinding<float> ("area_of_effect", "bubbleSize", (float)(Mod.Settings?.BubbleSize ?? 100)));
             AddBinding(m_FloatingStatsBinding   = new RawValueBinding     ("area_of_effect", "floatingStats", WriteFloatingStats));
             AddBinding(m_SelectedBuildingNameBinding = new ValueBinding<string>("area_of_effect", "buildingName", ""));
             AddBinding(m_SelectedBuildingEfficiencyBinding = new ValueBinding<int>("area_of_effect", "buildingEfficiency", 0));
@@ -161,6 +163,11 @@ namespace Area_of_Effect
                 m_HighVisBinding.Update(v);
                 if (Mod.Settings != null) { Mod.Settings.HighVis = v; Mod.Settings.ApplyAndSave(); }
             }));
+            AddBinding(new TriggerBinding<float>("area_of_effect", "setBubbleSize", (b) => {
+                float safeB = Mathf.Clamp(b, 50f, 200f);
+                m_BubbleSizeBinding.Update(safeB);
+                if (Mod.Settings != null) { Mod.Settings.BubbleSize = (int)safeB; Mod.Settings.ApplyAndSave(); }
+            }));
         }
 
         protected override void OnUpdate()
@@ -181,6 +188,8 @@ namespace Area_of_Effect
                 m_MaxDistanceBinding.Update((float)Mod.Settings.LabelDistance);
             if (m_HighVisBinding.value != Mod.Settings.HighVis)
                 m_HighVisBinding.Update(Mod.Settings.HighVis);
+            if (m_BubbleSizeBinding.value != (float)Mod.Settings.BubbleSize)
+                m_BubbleSizeBinding.Update((float)Mod.Settings.BubbleSize);
         }
 
         public void UpdateBuildingData(string name, int efficiency, int wellbeing, int reach)

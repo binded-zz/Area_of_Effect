@@ -20,6 +20,7 @@ interface FloatingStat {
 const floatingStats$ = bindValue<FloatingStat[]>('area_of_effect', 'floatingStats', []);
 const showStats$ = bindValue<boolean>('area_of_effect', 'showStats', true);
 const highVis$ = bindValue<boolean>('area_of_effect', 'highVis', false);
+const bubbleSize$ = bindValue<number>('area_of_effect', 'bubbleSize', 100);
 const activeActionMap$ = bindValue<string>('input', 'activeActionMap', 'Game');
 const activeScreen$ = bindValue<string>('menu', 'activeScreen', 'Game');
 
@@ -27,6 +28,7 @@ export const FloatingStatsOverlay: React.FC = () => {
     const stats = useValue(floatingStats$);
     const showStats = useValue(showStats$);
     const highVis = useValue(highVis$);
+    const bubbleSize = useValue(bubbleSize$);
     const activeActionMap = useValue(activeActionMap$);
     const activeScreen = useValue(activeScreen$);
 
@@ -45,7 +47,8 @@ export const FloatingStatsOverlay: React.FC = () => {
                         s.entries.map(e => e.label).join() === stat.entries.map(e => e.label).join()
                     )
                 ).map((stat, i) => {
-                    const scale = Math.max(0.5, Math.min(1.2, 150 / (stat.z + 50)));
+                    const baseScale = Math.max(0.5, Math.min(1.2, 150 / (stat.z + 50)));
+                    const finalScale = baseScale * (bubbleSize / 100);
                     return (
                         <div 
                             key={i} 
@@ -53,7 +56,7 @@ export const FloatingStatsOverlay: React.FC = () => {
                             style={{ 
                                 left: `${stat.x}%`, 
                                 top: `${stat.y}%`,
-                                transform: `translate(-50%, -100%) scale(${scale})`
+                                transform: `translate(-50%, -100%) scale(${finalScale})`
                             }}
                         >
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
