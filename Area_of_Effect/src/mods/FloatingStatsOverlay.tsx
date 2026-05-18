@@ -71,9 +71,9 @@ export const FloatingStatsOverlay: React.FC = () => {
                                             </div>
 
                                             {/* Custom Slate Tag below the Circle */}
-                                            <div className={styles.statLabelTag} style={{ borderColor: `${displayColor}33` }}>
-                                                <span className={styles.statLabelText}>{entry.label.toUpperCase()}</span>
-                                                <span className={styles.statLabelValue} style={{ color: valColor }}>+{Math.round(entry.value)}%</span>
+                                            <div className={styles.statLabelTag} style={{ borderColor: `${displayColor}55` }}>
+                                                <span className={styles.statLabelText} style={{ color: displayColor }}>{entry.label.toUpperCase()}</span>
+                                                <span className={styles.statLabelValue} style={{ color: displayColor }}>+{Math.round(entry.value)}%</span>
                                             </div>
                                         </div>
                                     );
