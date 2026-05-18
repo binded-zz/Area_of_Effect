@@ -367,6 +367,11 @@ export const AreaOfEffectPanel: React.FC = () => {
         </>
     );
 
+    // ── Settings Handlers ────────────────────────────────────────────────
+    const handleSetOpacity = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOpacity', v); }, [markDragging]);
+    const handleSetCircleSize = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setCircleSize', v); }, [markDragging]);
+    const handleSetOverlayHeight = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOverlayHeight', v); }, [markDragging]);
+
     // ── SETTINGS TAB ─────────────────────────────────────────────────────
     const renderSettingsTab = () => (
         <>
@@ -380,19 +385,19 @@ export const AreaOfEffectPanel: React.FC = () => {
                         label="Global Opacity" 
                         value={globalOpacity} 
                         min={0} max={100} unit="%" 
-                        onChange={useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOpacity', v); }, [markDragging])} 
+                        onChange={handleSetOpacity} 
                     />
                     <SettingsSliderRow 
                         label="Global Radius" 
                         value={globalSize} 
                         min={10} max={1000} unit="m" 
-                        onChange={useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setCircleSize', v); }, [markDragging])} 
+                        onChange={handleSetCircleSize} 
                     />
                     <SettingsSliderRow 
                         label="Global Height" 
                         value={globalHeight} 
                         min={-100} max={500} unit="m" 
-                        onChange={useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOverlayHeight', v); }, [markDragging])} 
+                        onChange={handleSetOverlayHeight} 
                     />
                 </div>
             </div>
