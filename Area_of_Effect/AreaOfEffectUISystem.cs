@@ -65,6 +65,8 @@ namespace Area_of_Effect
 
         private Dictionary<string, EffectSetting> m_LocalSettings = new Dictionary<string, EffectSetting>();
         private Dictionary<string, EffectSetting> m_GlobalSettings = new Dictionary<string, EffectSetting>();
+        private bool m_LocalDirty = true;
+        private bool m_GlobalDirty = true;
 
         private ValueBinding<string> m_LocalSettingsBinding;
         private ValueBinding<string> m_GlobalSettingsBinding;
@@ -190,6 +192,17 @@ namespace Area_of_Effect
                 m_HighVisBinding.Update(Mod.Settings.HighVis);
             if (m_BubbleSizeBinding.value != (float)Mod.Settings.BubbleSize)
                 m_BubbleSizeBinding.Update((float)Mod.Settings.BubbleSize);
+            // Flush layer settings bindings only when data actually changed
+            if (m_LocalDirty)
+            {
+                m_LocalSettingsBinding?.Update(SerializeDict(m_LocalSettings));
+                m_LocalDirty = false;
+            }
+            if (m_GlobalDirty)
+            {
+                m_GlobalSettingsBinding?.Update(SerializeDict(m_GlobalSettings));
+                m_GlobalDirty = false;
+            }
         }
 
         public void UpdateBuildingData(string name, int efficiency, int wellbeing, int reach)
@@ -220,22 +233,23 @@ namespace Area_of_Effect
         {
             if (m_LocalSettings.ContainsKey(id)) {
                 m_LocalSettings[id].Name = name;
-                m_LocalSettingsBinding?.Update(SerializeDict(m_LocalSettings));
+                // Name-only update: mark dirty so the binding flushes next frame
+                m_LocalDirty = true;
                 return;
             }
             m_LocalSettings[id] = new EffectSetting { Id = id, Name = name, Enabled = true, Color = defaultColor, Opacity = 1.0f };
-            m_LocalSettingsBinding?.Update(SerializeDict(m_LocalSettings));
+            m_LocalDirty = true;
         }
 
         public void RegisterGlobalLayer(string id, string name, UnityEngine.Color defaultColor)
         {
             if (m_GlobalSettings.ContainsKey(id)) {
                 m_GlobalSettings[id].Name = name;
-                m_GlobalSettingsBinding?.Update(SerializeDict(m_GlobalSettings));
+                m_GlobalDirty = true;
                 return;
             }
             m_GlobalSettings[id] = new EffectSetting { Id = id, Name = name, Enabled = true, Color = defaultColor, Opacity = 1.0f };
-            m_GlobalSettingsBinding?.Update(SerializeDict(m_GlobalSettings));
+            m_GlobalDirty = true;
         }
 
         public void EnsureWellbeingRegistered()
@@ -297,6 +311,7 @@ namespace Area_of_Effect
         {
             string serialized = SerializeDict(m_LocalSettings);
             m_LocalSettingsBinding?.Update(serialized);
+            m_LocalDirty = false; // just flushed — suppress next-frame redundant serialize
             try
             {
                 System.IO.File.WriteAllText(LocalSettingsFilePath, serialized);
@@ -316,6 +331,7 @@ namespace Area_of_Effect
         {
             string serialized = SerializeDict(m_GlobalSettings);
             m_GlobalSettingsBinding?.Update(serialized);
+            m_GlobalDirty = false; // just flushed — suppress next-frame redundant serialize
             try
             {
                 System.IO.File.WriteAllText(GlobalSettingsFilePath, serialized);
@@ -331,15 +347,15 @@ namespace Area_of_Effect
             }
         }
 
-        private void ToggleLocal(string id, bool on) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Enabled = on; SaveLocalSettings(); } }
-        private void ToggleAllLocal(bool on) { foreach (var kv in m_LocalSettings) kv.Value.Enabled = on; SaveLocalSettings(); }
-        private void SetLocalColor(string id, string hex) { if (m_LocalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; SaveLocalSettings(); } }
-        private void SetLocalAlpha(string id, float a) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); SaveLocalSettings(); } }
+        private void ToggleLocal(string id, bool on) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Enabled = on; m_LocalDirty = true; SaveLocalSettings(); } }
+        private void ToggleAllLocal(bool on) { foreach (var kv in m_LocalSettings) kv.Value.Enabled = on; m_LocalDirty = true; SaveLocalSettings(); }
+        private void SetLocalColor(string id, string hex) { if (m_LocalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; m_LocalDirty = true; SaveLocalSettings(); } }
+        private void SetLocalAlpha(string id, float a) { if (m_LocalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); m_LocalDirty = true; SaveLocalSettings(); } }
 
-        private void ToggleGlobal(string id, bool on) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Enabled = on; SaveGlobalSettings(); } }
-        private void ToggleAllGlobal(bool on) { foreach (var kv in m_GlobalSettings) kv.Value.Enabled = on; SaveGlobalSettings(); }
-        private void SetGlobalColor(string id, string hex) { if (m_GlobalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; SaveGlobalSettings(); } }
-        private void SetGlobalAlpha(string id, float a) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); SaveGlobalSettings(); } }
+        private void ToggleGlobal(string id, bool on) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Enabled = on; m_GlobalDirty = true; SaveGlobalSettings(); } }
+        private void ToggleAllGlobal(bool on) { foreach (var kv in m_GlobalSettings) kv.Value.Enabled = on; m_GlobalDirty = true; SaveGlobalSettings(); }
+        private void SetGlobalColor(string id, string hex) { if (m_GlobalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; m_GlobalDirty = true; SaveGlobalSettings(); } }
+        private void SetGlobalAlpha(string id, float a) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); m_GlobalDirty = true; SaveGlobalSettings(); } }
 
         private string SerializeDict(Dictionary<string, EffectSetting> d)
         {
