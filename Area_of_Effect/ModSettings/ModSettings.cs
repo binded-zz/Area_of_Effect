@@ -33,7 +33,7 @@ namespace Area_of_Effect.ModSettings
         [SettingsUISection(kSection, kMainGroup)]
         public VisualPreset Preset { get; set; } = VisualPreset.Rings;
 
-        [SettingsUISlider(min = 10, max = 300, step = 5)]
+        [SettingsUISlider(min = 10, max = 200, step = 5)]
         [SettingsUISection(kSection, kMainGroup)]
         public int GlobalCircleSize { get; set; } = 100;
 

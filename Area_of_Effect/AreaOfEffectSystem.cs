@@ -273,7 +273,12 @@ namespace Area_of_Effect
                 
                 if (EntityManager.HasBuffer<LocalModifierData>(pRef.m_Prefab)) {
                     var mods = EntityManager.GetBuffer<LocalModifierData>(pRef.m_Prefab);
-                    foreach (var m in mods) if (m.m_Type == Game.Buildings.LocalModifierType.Wellbeing) wellbeing = (int)m.m_Delta.max;
+                    foreach (var m in mods) {
+                        if (m.m_Type == Game.Buildings.LocalModifierType.Wellbeing) {
+                            wellbeing = (int)m.m_Delta.max;
+                            if (reach == 0) reach = (int)m.m_Radius.max;
+                        }
+                    }
                 }
 
                 m_UISystem.UpdateBuildingData(name, efficiency, wellbeing, reach);
@@ -506,7 +511,7 @@ namespace Area_of_Effect
         private int m_ListPoolUsed = 0;
 
         private Dictionary<string, string> m_LabelToLayerIdCache = new Dictionary<string, string>();
-        private Dictionary<Color, string> m_ColorToHexCache = new Dictionary<Color, string>();
+        private Dictionary<UnityEngine.Color, string> m_ColorToHexCache = new Dictionary<UnityEngine.Color, string>();
 
         private List<AreaOfEffectUISystem.StatEntry> GetListFromPool()
         {
@@ -534,7 +539,7 @@ namespace Area_of_Effect
             return newId;
         }
 
-        private string GetHexForColor(Color color)
+        private string GetHexForColor(UnityEngine.Color color)
         {
             if (m_ColorToHexCache.TryGetValue(color, out var hex)) return hex;
             string newHex = ColorUtility.ToHtmlStringRGB(color);

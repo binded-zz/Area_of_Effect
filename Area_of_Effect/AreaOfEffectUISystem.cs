@@ -133,7 +133,7 @@ namespace Area_of_Effect
                 if (Mod.Settings != null) { Mod.Settings.Preset = (ModSettings.ModSettings.VisualPreset)safeP; Mod.Settings.ApplyAndSave(); }
             }));
             AddBinding(new TriggerBinding<float>("area_of_effect", "setSize", (s) => {
-                float safeS = Mathf.Clamp(s, 10f, 500f);
+                float safeS = Mathf.Clamp(s, 10f, 200f);
                 m_SizeBinding.Update(safeS);
                 if (Mod.Settings != null) { Mod.Settings.GlobalCircleSize = (int)safeS; Mod.Settings.ApplyAndSave(); }
             }));
@@ -143,7 +143,7 @@ namespace Area_of_Effect
                 if (Mod.Settings != null) { Mod.Settings.OverlayHeight = (int)safeH; Mod.Settings.ApplyAndSave(); }
             }));
             AddBinding(new TriggerBinding<float>("area_of_effect", "setOpacity", (o) => {
-                float safeO = Mathf.Clamp(o, 10f, 100f);
+                float safeO = Mathf.Clamp(o, 0f, 100f);
                 m_OpacityBinding.Update(safeO);
                 if (Mod.Settings != null) { Mod.Settings.Opacity = (int)safeO; Mod.Settings.ApplyAndSave(); }
             }));

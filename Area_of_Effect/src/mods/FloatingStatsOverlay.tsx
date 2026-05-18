@@ -56,25 +56,35 @@ export const FloatingStatsOverlay: React.FC = () => {
                                 transform: `translate(-50%, -100%) scale(${scale})`
                             }}
                         >
-                            <div className={styles.multiStatBubble}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 {stat.entries.filter((entry, idx, arr) => arr.findIndex(e => e.label === entry.label) === idx).map((entry, j) => {
                                     const parsedColor = toHexColor(entry.color);
-                                    // Default C# missing color is white. Let's make Meals a nicer orange.
                                     const safeColor = (parsedColor.toLowerCase() === '#ffffff' && entry.label === 'Meals') ? '#ffb84d' : parsedColor;
                                     
-                                    // HighVis mode forces text/icons to be perfectly readable instead of using the custom color
                                     const displayColor = highVis ? '#000000' : safeColor;
-                                    const valColor = highVis ? '#008800' : safeColor;
+                                    const valColor = highVis ? '#ffffff' : safeColor;
                                     return (
-                                        <div key={j} className={styles.statRow}>
-                                            <div className={styles.miniIconBadge} style={{ borderColor: displayColor }}>
-                                                <Icon name={entry.icon} color={displayColor} size={16} />
+                                        <div key={j} className={styles.statStackItem} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4rem' }}>
+                                            {/* Beautiful Bubble Circle at the top */}
+                                            <div className={styles.statBubbleCircle} style={{ borderColor: displayColor }}>
+                                                <Icon name={entry.icon} color={displayColor} size={22} />
                                             </div>
-                                            <span className={styles.statName} style={{ color: displayColor, textShadow: highVis ? 'none' : '1px 1px 2px rgba(0,0,0,0.8)' }}>{entry.label}</span>
-                                            <span className={styles.statVal} style={{ color: valColor, textShadow: highVis ? 'none' : '1px 1px 2px rgba(0,0,0,0.8)' }}>+{Math.round(entry.value)}%</span>
+
+                                            {/* Custom Slate Tag below the Circle */}
+                                            <div className={styles.statLabelTag} style={{ borderColor: `${displayColor}33` }}>
+                                                <span className={styles.statLabelText}>{entry.label.toUpperCase()}</span>
+                                                <span className={styles.statLabelValue} style={{ color: valColor }}>+{Math.round(entry.value)}%</span>
+                                            </div>
                                         </div>
                                     );
                                 })}
+                                {/* Elegant Connecting Line extending down to the building */}
+                                <div 
+                                    className={styles.connectingLine} 
+                                    style={{ 
+                                        background: `linear-gradient(to top, rgba(255, 255, 255, 0.02) 0%, ${toHexColor(stat.entries[0].color)}e0 100%)` 
+                                    }} 
+                                />
                             </div>
                         </div>
                     );

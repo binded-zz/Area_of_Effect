@@ -259,14 +259,29 @@ export const AreaOfEffectPanel: React.FC = () => {
         return prevGlobalHeight.current;
     }, [globalHeightRaw, forceRender]);
 
+    const localColorTimeoutsRef = useRef<Record<string, any>>({});
+    const globalColorTimeoutsRef = useRef<Record<string, any>>({});
+
     // Stable Callbacks to prevent LayerRow re-renders
     const handleLocalToggle = useCallback((id: string, enabled: boolean) => trigger('area_of_effect', 'toggleLocalEffect', id, !enabled), []);
     const handleLocalAlpha = useCallback((id: string, val: number) => { markDragging(); trigger('area_of_effect', 'setLocalEffectAlpha', id, val / 100); }, [markDragging]);
-    const handleLocalColor = useCallback((id: string, hex: string) => { markDragging(); trigger('area_of_effect', 'setLocalEffectColor', id, hex); }, [markDragging]);
+    const handleLocalColor = useCallback((id: string, hex: string) => { 
+        markDragging(); 
+        if (localColorTimeoutsRef.current[id]) clearTimeout(localColorTimeoutsRef.current[id]);
+        localColorTimeoutsRef.current[id] = setTimeout(() => {
+            trigger('area_of_effect', 'setLocalEffectColor', id, hex);
+        }, 120);
+    }, [markDragging]);
 
     const handleGlobalToggle = useCallback((id: string, enabled: boolean) => trigger('area_of_effect', 'toggleGlobalLayer', id, !enabled), []);
     const handleGlobalAlpha = useCallback((id: string, val: number) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerAlpha', id, val / 100); }, [markDragging]);
-    const handleGlobalColor = useCallback((id: string, hex: string) => { markDragging(); trigger('area_of_effect', 'setGlobalLayerColor', id, hex); }, [markDragging]);
+    const handleGlobalColor = useCallback((id: string, hex: string) => { 
+        markDragging(); 
+        if (globalColorTimeoutsRef.current[id]) clearTimeout(globalColorTimeoutsRef.current[id]);
+        globalColorTimeoutsRef.current[id] = setTimeout(() => {
+            trigger('area_of_effect', 'setGlobalLayerColor', id, hex);
+        }, 120);
+    }, [markDragging]);
 
     // ── Settings Handlers ────────────────────────────────────────────────
     const handleSetOpacity = useCallback((v: number) => { markDragging(); trigger('area_of_effect', 'setOpacity', v); }, [markDragging]);
@@ -394,13 +409,13 @@ export const AreaOfEffectPanel: React.FC = () => {
                     <SettingsSliderRow 
                         label="Global Radius" 
                         value={globalSize} 
-                        min={10} max={1000} unit="m" 
+                        min={10} max={200} unit="m" 
                         onChange={handleSetCircleSize} 
                     />
                     <SettingsSliderRow 
                         label="Global Height" 
                         value={globalHeight} 
-                        min={-100} max={500} unit="m" 
+                        min={0} max={100} unit="m" 
                         onChange={handleSetOverlayHeight} 
                     />
                     <div className={styles.layerRowNative} style={{ marginTop: '12rem', marginBottom: '4rem' }}>
