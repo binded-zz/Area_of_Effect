@@ -1,7 +1,7 @@
 import React from 'react';
 import { bindValue, useValue } from 'cs2/api';
 import styles from './AreaOfEffect.module.scss';
-import { Icon } from './Icons';
+import { Icon, toHexColor } from './Icons';
 
 interface StatEntry {
     label: string;
@@ -36,7 +36,7 @@ export const FloatingStatsOverlay: React.FC = () => {
     if (!showStats || !stats || stats.length === 0 || isGameMenuOpen) return null;
 
     return (
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: -1 }}>
             <div className={`${styles.overlayRoot} ${highVis ? styles.highVis : ''}`}>
                 {stats.filter((stat, index, self) => 
                     index === self.findIndex(s => 
@@ -57,17 +57,19 @@ export const FloatingStatsOverlay: React.FC = () => {
                             }}
                         >
                             <div className={styles.multiStatBubble}>
-                                {stat.entries.filter((entry, idx, arr) => arr.findIndex(e => e.label === entry.label) === idx).map((entry, j) => (
-                                    <div key={j} className={styles.statRow}>
-                                        <div className={styles.miniIconBadge}>
-                                            <Icon name={entry.icon} className={styles.miniIconSvg} color={entry.color} size={16} />
+                                {stat.entries.filter((entry, idx, arr) => arr.findIndex(e => e.label === entry.label) === idx).map((entry, j) => {
+                                    const safeColor = toHexColor(entry.color);
+                                    // HighVis mode forces text/icons to be perfectly readable instead of using the custom color
+                                    const displayColor = highVis ? '#000000' : safeColor;
+                                    const valColor = highVis ? '#008800' : safeColor;
+                                    return (
+                                        <div key={j} className={styles.statRow}>
+                                            <Icon name={entry.icon} color={displayColor} size={16} />
+                                            <span className={styles.statName} style={{ color: displayColor, textShadow: highVis ? 'none' : '1px 1px 2px rgba(0,0,0,0.8)' }}>{entry.label}</span>
+                                            <span className={styles.statVal} style={{ color: valColor, textShadow: highVis ? 'none' : '1px 1px 2px rgba(0,0,0,0.8)' }}>+{Math.round(entry.value)}%</span>
                                         </div>
-                                        <div className={styles.statRowText}>
-                                            <span className={styles.statName} style={{ color: entry.color }}>{entry.label}</span>
-                                            <span className={styles.statVal} style={{ color: entry.color }}>+{Math.round(entry.value)}%</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     );
