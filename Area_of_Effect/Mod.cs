@@ -22,13 +22,12 @@ namespace Area_of_Effect
                 log.Info($"Current mod asset at {asset.path}");
 
             Settings = new ModSettings.ModSettings(this);
+            AssetDatabase.global.LoadSettings(nameof(Area_of_Effect), Settings, new ModSettings.ModSettings(this));
             Settings.RegisterInOptionsUI();
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(Settings));
 
             updateSystem.UpdateAt<AreaOfEffectUISystem>(SystemUpdatePhase.UIUpdate);
             updateSystem.UpdateAt<AreaOfEffectSystem>(SystemUpdatePhase.ToolUpdate);
-
-            AssetDatabase.global.LoadSettings(nameof(Area_of_Effect), Settings, new ModSettings.ModSettings(this));
         }
 
         public void OnDispose()

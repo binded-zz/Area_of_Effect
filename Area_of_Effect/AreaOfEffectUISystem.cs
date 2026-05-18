@@ -279,10 +279,32 @@ namespace Area_of_Effect
             return false;
         }
 
+        private static readonly string LocalSettingsFilePath = System.IO.Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) + "Low",
+            "Colossal Order",
+            "Cities Skylines II",
+            "Area_of_Effect_local.json"
+        );
+
+        private static readonly string GlobalSettingsFilePath = System.IO.Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) + "Low",
+            "Colossal Order",
+            "Cities Skylines II",
+            "Area_of_Effect_global.json"
+        );
+
         private void SaveLocalSettings()
         {
             string serialized = SerializeDict(m_LocalSettings);
             m_LocalSettingsBinding?.Update(serialized);
+            try
+            {
+                System.IO.File.WriteAllText(LocalSettingsFilePath, serialized);
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("Error saving local settings file: " + ex.Message);
+            }
             if (Mod.Settings != null)
             {
                 Mod.Settings.SavedLocalSettings = serialized;
@@ -294,6 +316,14 @@ namespace Area_of_Effect
         {
             string serialized = SerializeDict(m_GlobalSettings);
             m_GlobalSettingsBinding?.Update(serialized);
+            try
+            {
+                System.IO.File.WriteAllText(GlobalSettingsFilePath, serialized);
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("Error saving global settings file: " + ex.Message);
+            }
             if (Mod.Settings != null)
             {
                 Mod.Settings.SavedGlobalSettings = serialized;
@@ -329,9 +359,35 @@ namespace Area_of_Effect
 
         private void LoadSavedSettings()
         {
-            if (Mod.Settings == null) return;
-            LoadSettingsDict(Mod.Settings.SavedLocalSettings, m_LocalSettings);
-            LoadSettingsDict(Mod.Settings.SavedGlobalSettings, m_GlobalSettings);
+            string localStr = "";
+            string globalStr = "";
+            try
+            {
+                if (System.IO.File.Exists(LocalSettingsFilePath))
+                {
+                    localStr = System.IO.File.ReadAllText(LocalSettingsFilePath);
+                }
+                if (System.IO.File.Exists(GlobalSettingsFilePath))
+                {
+                    globalStr = System.IO.File.ReadAllText(GlobalSettingsFilePath);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("Error reading saved settings files: " + ex.Message);
+            }
+
+            if (string.IsNullOrEmpty(localStr) && Mod.Settings != null)
+            {
+                localStr = Mod.Settings.SavedLocalSettings;
+            }
+            if (string.IsNullOrEmpty(globalStr) && Mod.Settings != null)
+            {
+                globalStr = Mod.Settings.SavedGlobalSettings;
+            }
+
+            LoadSettingsDict(localStr, m_LocalSettings);
+            LoadSettingsDict(globalStr, m_GlobalSettings);
         }
 
         private void LoadSettingsDict(string savedStr, Dictionary<string, EffectSetting> dict)

@@ -97,20 +97,20 @@ const LayerRow = React.memo<{
 
     return (
         <div style={{ marginBottom: '8rem', paddingBottom: '6rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-            <div className={styles.layerRowNative} style={{ justifyContent: 'space-between' }}>
+            <div className={styles.layerRowNative} style={{ justifyContent: 'space-between', position: 'relative' }}>
                 {/* Left Side Group: Toggle + Icon + Truncating Clickable Name */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8rem', flexGrow: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
                     <AoeToggle checked={layer.enabled} onChange={() => onToggle(layer.id, layer.enabled)} />
                     <div className={styles.layerIconWrapNative} style={{ margin: '0 4rem' }}>
                         <Icon name={layer.id} color={color} size={22} />
                     </div>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0, overflow: 'hidden', cursor: 'pointer' }}>
-                        <div className={styles.bracketLabelNative} style={{ color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexGrow: 1 }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, overflow: 'hidden', cursor: 'pointer' }}>
+                        <div className={styles.bracketLabelNative} style={{ color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
                             {layer.name}
                         </div>
                         {/* Invisible ColorField that intercepts the click and opens the picker, scaled to completely cover the entire text wrapper click region */}
                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}>
-                            <div style={{ transform: 'scale(25, 5)', transformOrigin: 'top left', width: '100%', height: '100%' }}>
+                            <div style={{ transform: 'scale(10, 2)', transformOrigin: 'top left', width: '100%', height: '100%' }}>
                                 <ColorField
                                     value={displayColor}
                                     onChange={handleColorChange}
@@ -121,7 +121,7 @@ const LayerRow = React.memo<{
                 </div>
 
                 {/* Right-aligned Opacity Slider on same row */}
-                <div className={styles.sliderContainerNative} style={{ marginLeft: '12rem' }}>
+                <div className={styles.sliderContainerNative} style={{ position: 'relative', zIndex: 10 }}>
                     <div className={styles.sliderWrap}>
                         <Slider value={displayOpacity} start={0} end={100} onChange={handleAlphaChange} />
                     </div>
@@ -431,7 +431,7 @@ export const AreaOfEffectPanel: React.FC = () => {
                     />
                     <div className={styles.layerRowNative} style={{ marginTop: '12rem', marginBottom: '4rem' }}>
                         <span className={styles.statRowLabel} style={{ flexGrow: 1 }}>Visual Preset</span>
-                        <div style={{ display: 'flex', gap: '5rem' }}>
+                        <div className={styles.presetButtons}>
                             <button className={`${styles.footerBtn} ${preset === 0 ? styles.footerBtnPrimary : ''}`} onClick={() => setPreset(0)}>Neon Rings</button>
                             <button className={`${styles.footerBtn} ${preset === 1 ? styles.footerBtnPrimary : ''}`} onClick={() => setPreset(1)}>Soft Glow</button>
                             <button className={`${styles.footerBtn} ${preset === 2 ? styles.footerBtnPrimary : ''}`} onClick={() => setPreset(2)}>Classic</button>
