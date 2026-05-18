@@ -67,7 +67,9 @@ export const FloatingStatsOverlay: React.FC = () => {
                                     const valColor = highVis ? '#008800' : safeColor;
                                     return (
                                         <div key={j} className={styles.statRow}>
-                                            <Icon name={entry.icon} color={displayColor} size={16} />
+                                            <div className={styles.miniIconBadge} style={{ borderColor: displayColor }}>
+                                                <Icon name={entry.icon} color={displayColor} size={16} />
+                                            </div>
                                             <span className={styles.statName} style={{ color: displayColor, textShadow: highVis ? 'none' : '1px 1px 2px rgba(0,0,0,0.8)' }}>{entry.label}</span>
                                             <span className={styles.statVal} style={{ color: valColor, textShadow: highVis ? 'none' : '1px 1px 2px rgba(0,0,0,0.8)' }}>+{Math.round(entry.value)}%</span>
                                         </div>

@@ -319,6 +319,19 @@ $border-light: #333333;
     margin-bottom: 4rem;
 }
 
+.miniIconBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20rem;
+    height: 20rem;
+    border-radius: 50%;
+    border-width: 2px;
+    border-style: solid;
+    margin-right: 6rem;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
 .statName {
     font-size: 14rem;
     font-weight: 700;
