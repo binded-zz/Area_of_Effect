@@ -82,7 +82,7 @@ export const FloatingStatsOverlay: React.FC = () => {
                                 <div 
                                     className={styles.connectingLine} 
                                     style={{ 
-                                        background: `linear-gradient(to top, rgba(255, 255, 255, 0.02) 0%, ${toHexColor(stat.entries[0].color)}e0 100%)` 
+                                        background: `linear-gradient(to top, rgba(255, 255, 255, 0.02) 0%, ${toHexColor(stat.entries && stat.entries.length > 0 ? stat.entries[0].color : '#ffffff')}e0 100%)` 
                                     }} 
                                 />
                             </div>
