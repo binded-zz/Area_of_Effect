@@ -4,24 +4,44 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="Area_of_Effect" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Display the radius area of effect" />
+	<ShortDescription Value="Visualize the true reach of your city's services and passive auras. Area of Effect provides butter-smooth, real-time radius overlays for your buildings with absolutely zero impact on your frame rate." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="Display the radius area of effect" /-->
 	<LongDescription>
-Display the radius area of effect
+		Area of Effect (AoE) - Real-Time Auras & Influence Visualization
+		Take the guesswork out of city planning. Area of Effect seamlessly renders the exact influence radii and passive auras for your buildings, allowing you to optimize service coverage, land value, and district layouts with perfect precision.
+
+		Key Features:
+
+		Passive Auras & Service Radii: Instantly see the true radial auras (Well-being) versus standard road-network service ranges the moment you select or place a building.
+
+		Native Engine Integration: Built directly into the game's native OverlayRenderSystem for flawless visual integration with the city map, completely bypassing heavy UI layers.
+
+		Uncompromising Performance: Designed with extreme optimization. By hooking directly into the native rendering pipeline, this mod runs with virtually zero overhead. Experience butter-smooth overlays that won't cost you a single frame or cause UI thread hitching.
+
+		Clean & Unobtrusive: The overlay graphics are crisp, color-coded, and scale perfectly with the game engine's camera without cluttering your screen.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="Properties/screenshots/bubbles.jpg" />
+	<Screenshot Value="Properties/screenshots/color settings.jpg" />
+	<Screenshot Value="Properties/screenshots/layers 1.png" />
+	<Screenshot Value="Properties/screenshots/layers 2.png" />
+	<Screenshot Value="Properties/screenshots/layers close.jpg" />
+	<Screenshot Value="Properties/screenshots/layers far.jpg" />
+	<Screenshot Value="Properties/screenshots/reach.jpg" />
+	<Screenshot Value="Properties/screenshots/settings layers bubbles.jpg" />
+	<Screenshot Value="Properties/screenshots/settings.png" />
+	<Screenshot Value="Properties/screenshots/well-being reach.jpg" />
 	<!--Tag, can be set multiple times-->
-	<Tag Value="" />
+	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0" />
+	<ModVersion Value="1.0.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.0.*" />
+	<GameVersion Value="1.5.8*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
