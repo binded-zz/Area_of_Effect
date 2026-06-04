@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<Configurations>Debug;Release</Configurations>
 		<Version>1.0.2</Version>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
+
 
 		<!--The file where mod information which is required for publishing mod on PDX mods are stored-->
 		<PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
@@ -73,8 +73,7 @@
 	<ItemGroup>
 		<None Include="$(ModPropsFile)" Link="Properties\Mod.props" />
 		<None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
-		<None Include="README.md" Pack="true" PackagePath="\" />
-	</ItemGroup>
+
   <Target Name="BuildUI" AfterTargets="AfterBuild">
     <Exec Command="npm run build" />
   </Target>
