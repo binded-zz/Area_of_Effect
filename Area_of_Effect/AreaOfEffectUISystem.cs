@@ -39,6 +39,34 @@ namespace Area_of_Effect
             }
         }
 
+        public struct BuildingEffectEntry : IJsonWritable
+        {
+            public string group;
+            public string name;
+            public string value;
+            public string range;
+            public string icon;
+            public string color;
+
+            public void Write(IJsonWriter writer)
+            {
+                writer.TypeBegin("BuildingEffectEntry");
+                writer.PropertyName("group");
+                writer.Write(group ?? "");
+                writer.PropertyName("name");
+                writer.Write(name ?? "");
+                writer.PropertyName("value");
+                writer.Write(value ?? "");
+                writer.PropertyName("range");
+                writer.Write(range ?? "");
+                writer.PropertyName("icon");
+                writer.Write(icon ?? "");
+                writer.PropertyName("color");
+                writer.Write(color ?? "#ffffff");
+                writer.TypeEnd();
+            }
+        }
+
         public struct FloatingStat : IJsonWritable
         {
             public List<StatEntry> entries;
@@ -79,13 +107,34 @@ namespace Area_of_Effect
         private ValueBinding<float> m_MaxDistanceBinding;
         private ValueBinding<bool> m_HighVisBinding;
         private ValueBinding<float> m_BubbleSizeBinding;
-        private RawValueBinding m_FloatingStatsBinding;
+        private ValueBinding<string> m_FloatingStatsBinding;
         private ValueBinding<string> m_SelectedBuildingNameBinding;
-        private ValueBinding<int> m_SelectedBuildingEfficiencyBinding;
-        private ValueBinding<int> m_SelectedBuildingWellbeingBinding;
-        private ValueBinding<int> m_SelectedBuildingServiceReachBinding;
+        private ValueBinding<int>    m_SelectedBuildingEfficiencyBinding;
+        private ValueBinding<float>  m_CoverageRangeBinding;
+        private ValueBinding<float>  m_CoverageMagnitudeBinding;
+        private ValueBinding<float>  m_ModifierRangeBinding;
+        private ValueBinding<float>  m_ModifierMagnitudeBinding;
+        private ValueBinding<string> m_SelectedBuildingEffectsBinding;
 
-        private List<FloatingStat> m_CurrentStats = new List<FloatingStat>();
+        private ValueBinding<string> m_PresetsBinding;
+        private ValueBinding<float> m_WindowXBinding;
+        private ValueBinding<float> m_WindowYBinding;
+
+        private ValueBinding<bool>   m_EnableMiniInspectorBinding;
+        private ValueBinding<float>  m_InspectorXBinding;
+        private ValueBinding<float>  m_InspectorYBinding;
+        private ValueBinding<string> m_InspectorNameBinding;
+        private ValueBinding<string> m_InspectorEffectsJsonBinding;
+
+        public class Preset
+        {
+            public int Slot;
+            public string Name;
+            public string LocalData;
+            public string GlobalData;
+            public bool IsFilled;
+        }
+        private List<Preset> m_Presets = new List<Preset>();
 
         protected override void OnCreate()
         {
@@ -108,11 +157,25 @@ namespace Area_of_Effect
             AddBinding(m_MaxDistanceBinding     = new ValueBinding<float> ("area_of_effect", "maxDistance", (float)(Mod.Settings?.LabelDistance ?? 1500)));
             AddBinding(m_HighVisBinding         = new ValueBinding<bool>  ("area_of_effect", "highVis", Mod.Settings?.HighVis ?? false));
             AddBinding(m_BubbleSizeBinding       = new ValueBinding<float> ("area_of_effect", "bubbleSize", (float)(Mod.Settings?.BubbleSize ?? 100)));
-            AddBinding(m_FloatingStatsBinding   = new RawValueBinding     ("area_of_effect", "floatingStats", WriteFloatingStats));
-            AddBinding(m_SelectedBuildingNameBinding = new ValueBinding<string>("area_of_effect", "buildingName", ""));
-            AddBinding(m_SelectedBuildingEfficiencyBinding = new ValueBinding<int>("area_of_effect", "buildingEfficiency", 0));
-            AddBinding(m_SelectedBuildingWellbeingBinding = new ValueBinding<int>("area_of_effect", "buildingWellbeing", 0));
-            AddBinding(m_SelectedBuildingServiceReachBinding = new ValueBinding<int>("area_of_effect", "buildingServiceReach", 0));
+            AddBinding(m_FloatingStatsBinding   = new ValueBinding<string>("area_of_effect", "floatingStatsJson", "[]"));
+            AddBinding(m_SelectedBuildingNameBinding       = new ValueBinding<string>("area_of_effect", "buildingName",          ""));
+            AddBinding(m_SelectedBuildingEfficiencyBinding  = new ValueBinding<int>   ("area_of_effect", "buildingEfficiency",    0));
+            AddBinding(m_CoverageRangeBinding               = new ValueBinding<float> ("area_of_effect", "coverageRange",         0f));
+            AddBinding(m_CoverageMagnitudeBinding           = new ValueBinding<float> ("area_of_effect", "coverageMagnitude",     0f));
+            AddBinding(m_ModifierRangeBinding               = new ValueBinding<float> ("area_of_effect", "modifierRange",         0f));
+            AddBinding(m_ModifierMagnitudeBinding           = new ValueBinding<float> ("area_of_effect", "modifierMagnitude",     0f));
+            AddBinding(m_SelectedBuildingEffectsBinding     = new ValueBinding<string>("area_of_effect", "buildingEffectsJson",   "[]"));
+
+            InitializePresets();
+            AddBinding(m_PresetsBinding = new ValueBinding<string>("area_of_effect", "presetsJson", SerializePresetsForUI()));
+            AddBinding(m_WindowXBinding = new ValueBinding<float>("area_of_effect", "windowX", Mod.Settings != null ? Mod.Settings.WindowX : 100f));
+            AddBinding(m_WindowYBinding = new ValueBinding<float>("area_of_effect", "windowY", Mod.Settings != null ? Mod.Settings.WindowY : 100f));
+
+            AddBinding(m_EnableMiniInspectorBinding   = new ValueBinding<bool>  ("area_of_effect", "enableMiniInspector",   Mod.Settings != null ? Mod.Settings.EnableMiniInspector : true));
+            AddBinding(m_InspectorXBinding            = new ValueBinding<float> ("area_of_effect", "inspectorX",            Mod.Settings != null ? Mod.Settings.InspectorX : 100f));
+            AddBinding(m_InspectorYBinding            = new ValueBinding<float> ("area_of_effect", "inspectorY",            Mod.Settings != null ? Mod.Settings.InspectorY : 300f));
+            AddBinding(m_InspectorNameBinding         = new ValueBinding<string>("area_of_effect", "inspectorName",         ""));
+            AddBinding(m_InspectorEffectsJsonBinding  = new ValueBinding<string>("area_of_effect", "inspectorEffectsJson", "[]"));
 
             // Triggers
             AddBinding(new TriggerBinding<string, bool>  ("area_of_effect", "toggleLocalEffect",    ToggleLocal));
@@ -127,6 +190,25 @@ namespace Area_of_Effect
 
             AddBinding(new TriggerBinding("area_of_effect", "togglePanel", () => {
                 m_IsPanelOpenBinding.Update(!m_IsPanelOpenBinding.value);
+            }));
+            AddBinding(new TriggerBinding<float, float>("area_of_effect", "saveWindowPosition", SaveWindowPosition));
+            AddBinding(new TriggerBinding("area_of_effect", "resetColorsOnly", ResetColorsOnly));
+            AddBinding(new TriggerBinding("area_of_effect", "resetConfigOnly", ResetConfigOnly));
+            AddBinding(new TriggerBinding<int, string>("area_of_effect", "savePreset", SavePreset));
+            AddBinding(new TriggerBinding<int>("area_of_effect", "loadPreset", LoadPreset));
+            AddBinding(new TriggerBinding<int>("area_of_effect", "deletePreset", DeletePreset));
+            
+            AddBinding(new TriggerBinding<bool>("area_of_effect", "setEnableMiniInspector", (val) => {
+                m_EnableMiniInspectorBinding.Update(val);
+                if (Mod.Settings != null) { Mod.Settings.EnableMiniInspector = val; Mod.Settings.ApplyAndSave(); }
+            }));
+            AddBinding(new TriggerBinding<float, float>("area_of_effect", "saveInspectorPosition", (x, y) => {
+                if (Mod.Settings != null)
+                {
+                    Mod.Settings.InspectorX = x;
+                    Mod.Settings.InspectorY = y;
+                    Mod.Settings.ApplyAndSave();
+                }
             }));
             
 
@@ -156,7 +238,7 @@ namespace Area_of_Effect
                 if (Mod.Settings != null) { Mod.Settings.ShowStats = val; Mod.Settings.ApplyAndSave(); }
             }));
             AddBinding(new TriggerBinding<float>("area_of_effect", "setMaxDistance", (d) => {
-                float safeD = Mathf.Clamp(d, 1000f, 3500f);
+                float safeD = Mathf.Clamp(d, 1000f, 3600f);
                 m_MaxDistanceBinding.Update(safeD);
                 if (Mod.Settings != null) { Mod.Settings.LabelDistance = (int)safeD; Mod.Settings.ApplyAndSave(); }
                 World.GetOrCreateSystemManaged<AreaOfEffectSystem>().ClearStatsCache();
@@ -203,30 +285,39 @@ namespace Area_of_Effect
                 m_GlobalSettingsBinding?.Update(SerializeDict(m_GlobalSettings));
                 m_GlobalDirty = false;
             }
+            if (m_WindowXBinding.value != Mod.Settings.WindowX)
+                m_WindowXBinding.Update(Mod.Settings.WindowX);
+            if (m_WindowYBinding.value != Mod.Settings.WindowY)
+                m_WindowYBinding.Update(Mod.Settings.WindowY);
+
+            if (m_EnableMiniInspectorBinding.value != Mod.Settings.EnableMiniInspector)
+                m_EnableMiniInspectorBinding.Update(Mod.Settings.EnableMiniInspector);
+            if (m_InspectorXBinding.value != Mod.Settings.InspectorX)
+                m_InspectorXBinding.Update(Mod.Settings.InspectorX);
+            if (m_InspectorYBinding.value != Mod.Settings.InspectorY)
+                m_InspectorYBinding.Update(Mod.Settings.InspectorY);
         }
 
-        public void UpdateBuildingData(string name, int efficiency, int wellbeing, int reach)
+        public void UpdateBuildingData(string name, int efficiency, float covRange, float covMag, float modRange, float modMag, string effectsJson)
         {
-            m_SelectedBuildingNameBinding.Update(name);
+            m_SelectedBuildingNameBinding.Update(name ?? "");
             m_SelectedBuildingEfficiencyBinding.Update(efficiency);
-            m_SelectedBuildingWellbeingBinding.Update(wellbeing);
-            m_SelectedBuildingServiceReachBinding.Update(reach);
+            m_CoverageRangeBinding.Update(covRange);
+            m_CoverageMagnitudeBinding.Update(covMag);
+            m_ModifierRangeBinding.Update(modRange);
+            m_ModifierMagnitudeBinding.Update(modMag);
+            m_SelectedBuildingEffectsBinding.Update(effectsJson ?? "[]");
         }
 
-        public void UpdateFloatingStats(List<FloatingStat> stats)
+        public void UpdateFloatingStats(string statsJson)
         {
-            m_CurrentStats = stats;
-            m_FloatingStatsBinding?.Update();
+            m_FloatingStatsBinding?.Update(statsJson ?? "[]");
         }
 
-        private void WriteFloatingStats(IJsonWriter writer)
+        public void UpdateInspectorData(string name, string effectsJson)
         {
-            writer.ArrayBegin(m_CurrentStats.Count);
-            foreach (var stat in m_CurrentStats)
-            {
-                stat.Write(writer);
-            }
-            writer.ArrayEnd();
+            m_InspectorNameBinding?.Update(name ?? "");
+            m_InspectorEffectsJsonBinding?.Update(effectsJson ?? "[]");
         }
 
         public void RegisterLocalEffectType(string id, string name, UnityEngine.Color defaultColor)
@@ -254,31 +345,25 @@ namespace Area_of_Effect
 
         public void EnsureWellbeingRegistered()
         {
-            RegisterGlobalLayer("layer_wellbeing", "Well-being", new Color(0.3f, 1f, 0.3f, 1f));
-            RegisterGlobalLayer("layer_police", "Police Coverage", new Color(0.2f, 0.4f, 1f, 1f));
-            RegisterGlobalLayer("layer_fire", "Fire Protection", new Color(1f, 0.3f, 0.2f, 1f));
-            RegisterGlobalLayer("layer_parks", "Parks & Recreation", new Color(0.2f, 1f, 0.4f, 1f));
-            RegisterGlobalLayer("layer_healthcare", "Healthcare", new Color(1f, 0.5f, 0.5f, 1f));
-            RegisterGlobalLayer("layer_telecom", "Telecom", new Color(0.5f, 0.8f, 1f, 1f));
-            RegisterGlobalLayer("layer_post", "Postal Service", new Color(1f, 0.8f, 0.2f, 1f));
-            RegisterGlobalLayer("layer_edu_elementary", "Education: Elementary", new Color(1f, 1f, 0.5f, 1f));
-            RegisterGlobalLayer("layer_edu_highschool", "Education: High School", new Color(1f, 0.8f, 0.4f, 1f));
-            RegisterGlobalLayer("layer_edu_college", "Education: College", new Color(1f, 0.6f, 0.3f, 1f));
-            RegisterGlobalLayer("layer_edu_university", "Education: University", new Color(1f, 0.4f, 0.2f, 1f));
-            RegisterGlobalLayer("layer_pollution", "Pollution Producer", new Color(0.5f, 0.4f, 0.2f, 1f));
+            RegisterGlobalLayer("layer_wellbeing",       "Well-being",          new Color(0.9f,  0.1f,  0.75f, 1f));  // Magenta
+            RegisterGlobalLayer("layer_police",           "Police Coverage",     new Color(0.15f, 0.5f,  1.0f,  1f));  // Royal Blue
+            RegisterGlobalLayer("layer_fire",             "Fire Protection",     new Color(1f,    0.25f, 0.1f,  1f));  // Red-Orange
+            RegisterGlobalLayer("layer_parks",            "Parks & Recreation",  new Color(0.15f, 0.85f, 0.3f,  1f));  // Green
+            RegisterGlobalLayer("layer_healthcare",       "Healthcare",          new Color(1f,    0.35f, 0.35f, 1f));  // Coral Red (distinct from magenta Well-being)
+            RegisterGlobalLayer("layer_deathcare",        "Deathcare",           new Color(0.3f,  0.7f,  0.55f, 1f));  // Teal (distinct from all others)
+            RegisterGlobalLayer("layer_telecom",          "Telecom",             new Color(0.0f,  0.85f, 1f,    1f));  // Cyan
+            RegisterGlobalLayer("layer_post",             "Postal Service",      new Color(1f,    0.85f, 0.0f,  1f));  // Yellow
+            RegisterGlobalLayer("layer_edu_elementary",   "Education: Elementary",   new Color(0.55f, 0.9f,  0.1f,  1f));  // Yellow-Green
+            RegisterGlobalLayer("layer_edu_highschool",   "Education: High School",  new Color(1f,    0.5f,  0.05f, 1f));  // Orange
+            RegisterGlobalLayer("layer_edu_college",      "Education: College",      new Color(0.35f, 0.35f, 1f,    1f));  // Indigo Blue
+            RegisterGlobalLayer("layer_edu_university",   "Education: University",   new Color(0.65f, 0.15f, 0.95f, 1f));  // Purple
 
-            // Pre-register all Local Effects so that they are always configurable and visible in the UI settings panel
-            RegisterLocalEffectType("CoverageData", "Coverage", new Color(0f, 1f, 0f, 0.5f));
-            RegisterLocalEffectType("LocalModifier_Wellbeing", "Well-being Modifier", new Color(0f, 1f, 0f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_Crime", "Crime Modifier", new Color(1f, 0f, 0f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_Health", "Health Modifier", new Color(1f, 0.5f, 0.5f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_ForestFireHazard", "Forest Fire Hazard", new Color(1f, 0.5f, 0f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_GroundPollution", "Ground Pollution", new Color(0.5f, 0.3f, 0f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_AirPollution", "Air Pollution", new Color(0.4f, 0.4f, 0.4f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_NoisePollution", "Noise Pollution", new Color(0.8f, 0.4f, 0.2f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_CrimeAccumulation", "Crime Accumulation", new Color(0.7f, 0.1f, 0.1f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_MailAccumulation", "Mail Accumulation", new Color(0.9f, 0.7f, 0.1f, 0.5f));
-            // RegisterLocalEffectType("LocalModifier_GarbageAccumulation", "Garbage Accumulation", new Color(0.3f, 0.3f, 0.3f, 0.5f));
+            RegisterLocalEffectType("CoverageData",                       "General Coverage",           new Color(0.15f, 0.8f, 0.3f, 0.5f));
+            RegisterLocalEffectType("PreplacementRing",                   "Pre-placement Ring",         new Color(0.0f, 0.78f, 1.0f, 0.6f));
+            RegisterLocalEffectType("LocalModifier_Wellbeing",            "Well-being Modifier",        new Color(0.9f, 0.1f, 0.75f, 0.5f));
+            RegisterLocalEffectType("LocalModifier_ElementaryEducation",  "Elementary Education",       new Color(0.6f, 0.9f, 0.1f, 0.5f));
+            RegisterLocalEffectType("LocalModifier_HighSchoolEducation",  "High School Education",      new Color(1f, 0.55f, 0.05f, 0.5f));
+            RegisterLocalEffectType("LocalModifier_HigherEducation",      "Higher Education",           new Color(0.35f, 0.35f, 1f, 0.5f));
         }
 
         public bool TryGetLocalEffectSetting(string id, out EffectSetting s) => m_LocalSettings.TryGetValue(id, out s);
@@ -293,22 +378,33 @@ namespace Area_of_Effect
             return false;
         }
 
-        private static readonly string LocalSettingsFilePath = System.IO.Path.Combine(
-            System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) + "Low",
-            "Colossal Order",
-            "Cities Skylines II",
-            "Area_of_Effect_local.json"
-        );
+        private static string GetSafePath(string folder, string filename)
+        {
+            try
+            {
+                string baseDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData);
+                if (string.IsNullOrEmpty(baseDir)) return null;
+                string targetDir = System.IO.Path.Combine(baseDir + "Low", "Colossal Order", "Cities Skylines II", folder);
+                if (!System.IO.Directory.Exists(targetDir))
+                {
+                    System.IO.Directory.CreateDirectory(targetDir);
+                }
+                return System.IO.Path.Combine(targetDir, filename);
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("Error creating safe path: " + ex.Message);
+                return null;
+            }
+        }
 
-        private static readonly string GlobalSettingsFilePath = System.IO.Path.Combine(
-            System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData) + "Low",
-            "Colossal Order",
-            "Cities Skylines II",
-            "Area_of_Effect_global.json"
-        );
+        private static readonly string LocalSettingsFilePath = GetSafePath("ModsSettings\\Area_of_Effect", "Area_of_Effect_local.json");
+        private static readonly string GlobalSettingsFilePath = GetSafePath("ModsSettings\\Area_of_Effect", "Area_of_Effect_global.json");
+        private static readonly string PresetsFilePath = GetSafePath("ModsSettings\\Area_of_Effect", "Area_of_Effect_presets.json");
 
         private void SaveLocalSettings()
         {
+            if (string.IsNullOrEmpty(LocalSettingsFilePath)) return;
             string serialized = SerializeDict(m_LocalSettings);
             m_LocalSettingsBinding?.Update(serialized);
             m_LocalDirty = false; // just flushed — suppress next-frame redundant serialize
@@ -329,6 +425,7 @@ namespace Area_of_Effect
 
         private void SaveGlobalSettings()
         {
+            if (string.IsNullOrEmpty(GlobalSettingsFilePath)) return;
             string serialized = SerializeDict(m_GlobalSettings);
             m_GlobalSettingsBinding?.Update(serialized);
             m_GlobalDirty = false; // just flushed — suppress next-frame redundant serialize
@@ -357,6 +454,193 @@ namespace Area_of_Effect
         private void SetGlobalColor(string id, string hex) { if (m_GlobalSettings.TryGetValue(id, out var s) && ColorUtility.TryParseHtmlString(hex, out var c)) { c.a = 1f; s.Color = c; m_GlobalDirty = true; SaveGlobalSettings(); } }
         private void SetGlobalAlpha(string id, float a) { if (m_GlobalSettings.TryGetValue(id, out var s)) { s.Opacity = Mathf.Clamp01(a); m_GlobalDirty = true; SaveGlobalSettings(); } }
 
+        private void ResetColorsOnly()
+        {
+            m_LocalSettings.Clear();
+            m_GlobalSettings.Clear();
+            EnsureWellbeingRegistered();
+            SaveLocalSettings();
+            SaveGlobalSettings();
+            m_LocalDirty = true;
+            m_GlobalDirty = true;
+        }
+
+        private void ResetConfigOnly()
+        {
+            string localBackup = SerializeDict(m_LocalSettings);
+            string globalBackup = SerializeDict(m_GlobalSettings);
+
+            if (Mod.Settings != null)
+            {
+                Mod.Settings.SetDefaults();
+                Mod.Settings.SavedLocalSettings = localBackup;
+                Mod.Settings.SavedGlobalSettings = globalBackup;
+                Mod.Settings.ApplyAndSave();
+            }
+
+            // Sync UI bindings for all config variables immediately
+            OnUpdate();
+        }
+
+        private void SaveWindowPosition(float x, float y)
+        {
+            if (Mod.Settings != null)
+            {
+                Mod.Settings.WindowX = x;
+                Mod.Settings.WindowY = y;
+                Mod.Settings.ApplyAndSave();
+            }
+        }
+
+        private void InitializePresets()
+        {
+            m_Presets.Clear();
+            for (int i = 0; i < 5; i++)
+            {
+                m_Presets.Add(new Preset { Slot = i, Name = $"Preset {i + 1}", LocalData = "", GlobalData = "", IsFilled = false });
+            }
+            LoadPresets();
+        }
+
+        private string SerializePresets()
+        {
+            var parts = new List<string>();
+            foreach (var p in m_Presets)
+            {
+                string escName = EscapeJsonString(p.Name);
+                string escLocal = EscapeJsonString(p.LocalData);
+                string escGlobal = EscapeJsonString(p.GlobalData);
+                parts.Add($"{{\"slot\":{p.Slot},\"name\":\"{escName}\",\"isFilled\":{(p.IsFilled ? "true" : "false")},\"localData\":\"{escLocal}\",\"globalData\":\"{escGlobal}\"}}");
+            }
+            return "[" + string.Join(",", parts) + "]";
+        }
+
+        private string SerializePresetsForUI()
+        {
+            var parts = new List<string>();
+            foreach (var p in m_Presets)
+            {
+                string escName = EscapeJsonString(p.Name);
+                parts.Add($"{{\"slot\":{p.Slot},\"name\":\"{escName}\",\"isFilled\":{(p.IsFilled ? "true" : "false")}}}");
+            }
+            return "[" + string.Join(",", parts) + "]";
+        }
+
+        private void SavePreset(int slot, string name)
+        {
+            if (slot < 0 || slot >= 5) return;
+            m_Presets[slot].Slot = slot;
+            m_Presets[slot].Name = string.IsNullOrEmpty(name) ? $"Preset {slot + 1}" : name;
+            m_Presets[slot].IsFilled = true;
+            m_Presets[slot].LocalData = SerializeDict(m_LocalSettings);
+            m_Presets[slot].GlobalData = SerializeDict(m_GlobalSettings);
+
+            try
+            {
+                if (!string.IsNullOrEmpty(PresetsFilePath))
+                {
+                    System.IO.File.WriteAllText(PresetsFilePath, SerializePresets());
+                }
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("[AoE] Error saving presets to file: " + ex.Message);
+            }
+
+            m_PresetsBinding.Update(SerializePresetsForUI());
+        }
+
+        private void LoadPreset(int slot)
+        {
+            if (slot < 0 || slot >= 5 || !m_Presets[slot].IsFilled) return;
+
+            m_LocalSettings.Clear();
+            m_GlobalSettings.Clear();
+
+            LoadSettingsDict(m_Presets[slot].LocalData, m_LocalSettings);
+            LoadSettingsDict(m_Presets[slot].GlobalData, m_GlobalSettings);
+
+            EnsureWellbeingRegistered();
+
+            SaveLocalSettings();
+            SaveGlobalSettings();
+
+            m_LocalDirty = true;
+            m_GlobalDirty = true;
+        }
+
+        private void DeletePreset(int slot)
+        {
+            if (slot < 0 || slot >= 5) return;
+            m_Presets[slot].Name = $"Preset {slot + 1}";
+            m_Presets[slot].IsFilled = false;
+            m_Presets[slot].LocalData = "";
+            m_Presets[slot].GlobalData = "";
+
+            try
+            {
+                if (!string.IsNullOrEmpty(PresetsFilePath))
+                {
+                    System.IO.File.WriteAllText(PresetsFilePath, SerializePresets());
+                }
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("[AoE] Error deleting preset: " + ex.Message);
+            }
+
+            m_PresetsBinding.Update(SerializePresetsForUI());
+        }
+
+        private void LoadPresets()
+        {
+            if (string.IsNullOrEmpty(PresetsFilePath) || !System.IO.File.Exists(PresetsFilePath)) return;
+            try
+            {
+                string content = System.IO.File.ReadAllText(PresetsFilePath).Trim();
+                if (content.StartsWith("[")) content = content.Substring(1);
+                if (content.EndsWith("]")) content = content.Substring(0, content.Length - 1);
+
+                string[] objects = content.Split(new string[] { "},{" }, System.StringSplitOptions.RemoveEmptyEntries);
+                foreach (string obj in objects)
+                {
+                    string cleanObj = obj.Trim('{', '}');
+                    string slotStr = ExtractJsonValue(cleanObj, "slot");
+                    if (string.IsNullOrEmpty(slotStr)) continue;
+
+                    int slot = 0;
+                    if (int.TryParse(slotStr, out slot) && slot >= 0 && slot < 5)
+                    {
+                        string name = UnescapeJsonString(ExtractJsonValue(cleanObj, "name"));
+                        string isFilledStr = ExtractJsonValue(cleanObj, "isFilled");
+                        string localData = UnescapeJsonString(ExtractJsonValue(cleanObj, "localData"));
+                        string globalData = UnescapeJsonString(ExtractJsonValue(cleanObj, "globalData"));
+
+                        m_Presets[slot].Name = name;
+                        m_Presets[slot].IsFilled = isFilledStr == "true";
+                        m_Presets[slot].LocalData = localData;
+                        m_Presets[slot].GlobalData = globalData;
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError("[AoE] Error loading presets: " + ex.Message);
+            }
+        }
+
+        public static string EscapeJsonString(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            return s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
+        }
+
+        private static string UnescapeJsonString(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            return s.Replace("\\\"", "\"").Replace("\\n", "\n").Replace("\\r", "\r").Replace("\\\\", "\\");
+        }
+
         private string SerializeDict(Dictionary<string, EffectSetting> d)
         {
             var parts = new List<string>();
@@ -379,27 +663,32 @@ namespace Area_of_Effect
             string globalStr = "";
             try
             {
-                if (System.IO.File.Exists(LocalSettingsFilePath))
+                UnityEngine.Debug.Log($"[AoE] Loading saved settings from LocalPath: {LocalSettingsFilePath}, GlobalPath: {GlobalSettingsFilePath}");
+                if (!string.IsNullOrEmpty(LocalSettingsFilePath) && System.IO.File.Exists(LocalSettingsFilePath))
                 {
                     localStr = System.IO.File.ReadAllText(LocalSettingsFilePath);
+                    UnityEngine.Debug.Log($"[AoE] Read local settings content: {localStr}");
                 }
-                if (System.IO.File.Exists(GlobalSettingsFilePath))
+                if (!string.IsNullOrEmpty(GlobalSettingsFilePath) && System.IO.File.Exists(GlobalSettingsFilePath))
                 {
                     globalStr = System.IO.File.ReadAllText(GlobalSettingsFilePath);
+                    UnityEngine.Debug.Log($"[AoE] Read global settings content: {globalStr}");
                 }
             }
             catch (System.Exception ex)
             {
-                UnityEngine.Debug.LogError("Error reading saved settings files: " + ex.Message);
+                UnityEngine.Debug.LogError("[AoE] Error reading saved settings files: " + ex.Message);
             }
 
             if (string.IsNullOrEmpty(localStr) && Mod.Settings != null)
             {
                 localStr = Mod.Settings.SavedLocalSettings;
+                UnityEngine.Debug.Log($"[AoE] Fallback local settings from Mod.Settings: {localStr}");
             }
             if (string.IsNullOrEmpty(globalStr) && Mod.Settings != null)
             {
                 globalStr = Mod.Settings.SavedGlobalSettings;
+                UnityEngine.Debug.Log($"[AoE] Fallback global settings from Mod.Settings: {globalStr}");
             }
 
             LoadSettingsDict(localStr, m_LocalSettings);
@@ -416,6 +705,7 @@ namespace Area_of_Effect
                 if (content.EndsWith("]")) content = content.Substring(0, content.Length - 1);
 
                 string[] objects = content.Split(new string[] { "},{" }, System.StringSplitOptions.RemoveEmptyEntries);
+                UnityEngine.Debug.Log($"[AoE] Parsing {objects.Length} settings objects...");
                 foreach (string obj in objects)
                 {
                     string cleanObj = obj.Trim('{', '}');
@@ -449,16 +739,18 @@ namespace Area_of_Effect
                         Color = new Color(r, g, b, a),
                         Opacity = opacity
                     };
+                    UnityEngine.Debug.Log($"[AoE] Loaded Setting: id={id}, name={name}, enabled={enabled}, color=({r},{g},{b},{a}), opacity={opacity}");
                 }
             }
             catch (System.Exception ex)
             {
-                UnityEngine.Debug.LogError("Error loading saved Area of Effect layer settings: " + ex.Message);
+                UnityEngine.Debug.LogError("[AoE] Error loading saved Area of Effect layer settings: " + ex.Message);
             }
         }
 
         private string ExtractJsonValue(string objStr, string key)
         {
+            if (string.IsNullOrEmpty(objStr) || string.IsNullOrEmpty(key)) return "";
             string pattern = "\"" + key + "\":";
             int idx = objStr.IndexOf(pattern);
             if (idx == -1)
@@ -471,22 +763,27 @@ namespace Area_of_Effect
             int startIdx = idx + pattern.Length;
             if (startIdx >= objStr.Length) return "";
 
+            string result;
             if (objStr[startIdx] == '"')
             {
                 startIdx++;
                 int endIdx = objStr.IndexOf('"', startIdx);
                 if (endIdx == -1) return "";
-                return objStr.Substring(startIdx, endIdx - startIdx);
+                result = objStr.Substring(startIdx, endIdx - startIdx);
             }
             else
             {
                 int endIdx = objStr.IndexOf(',', startIdx);
                 if (endIdx == -1)
                 {
-                    return objStr.Substring(startIdx).Trim();
+                    result = objStr.Substring(startIdx).Trim();
                 }
-                return objStr.Substring(startIdx, endIdx - startIdx).Trim();
+                else
+                {
+                    result = objStr.Substring(startIdx, endIdx - startIdx).Trim();
+                }
             }
+            return result ?? "";
         }
     }
 }

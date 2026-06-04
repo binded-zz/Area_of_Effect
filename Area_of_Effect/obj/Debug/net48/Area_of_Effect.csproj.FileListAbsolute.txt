@@ -1,9 +1,0 @@
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\bin\Debug\net48\Area_of_Effect.dll
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\bin\Debug\net48\Area_of_Effect.pdb
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\obj\Debug\net48\Area_of_Effect.csproj.AssemblyReference.cache
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\obj\Debug\net48\Area_of_Effect.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\obj\Debug\net48\Area_of_Effect.AssemblyInfoInputs.cache
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\obj\Debug\net48\Area_of_Effect.AssemblyInfo.cs
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\obj\Debug\net48\Area_of_Effect.csproj.CoreCompileInputs.cache
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\obj\Debug\net48\Area_of_Effect.dll
-C:\Users\ajord\source\repos\Area_of_Effect\Area_of_Effect\obj\Debug\net48\Area_of_Effect.pdb

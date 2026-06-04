@@ -1,6 +1,6 @@
-﻿<Publish>
+<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="145021" />
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="Area_of_Effect" />
 	<!--Short description of the mod-->
@@ -8,50 +8,68 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<!--LongDescription Value="Display the radius area of effect" /-->
 	<LongDescription>
-		Area of Effect (AoE) - Real-Time Auras & Influence Visualization
-		Take the guesswork out of city planning. Area of Effect seamlessly renders the exact influence radii and passive auras for your buildings, allowing you to optimize service coverage, land value, and district layouts with perfect precision.
+# Area of Effect - Real-Time Auras and Influence Visualization
 
-		Key Features:
+Take the guesswork out of city planning. Area of Effect renders the exact influence radii, passive auras, and road network coverage for your buildings, letting you optimize service coverage, land value, and district layouts with precision.
 
-		Passive Auras & Service Radii: Instantly see the true radial auras (Well-being) versus standard road-network service ranges the moment you select or place a building.
+# What's New in v1.0.2
 
-		Native Engine Integration: Built directly into the game's native OverlayRenderSystem for flawless visual integration with the city map, completely bypassing heavy UI layers.
+- **Presets System**: Save and load up to 5 custom configurations of active layers, colors, and settings.
+- **Interactive UI**: Main panel and Mini-Inspector window positions now persist across game launches.
+- **High Visibility Mode**: Scale up floating stat bubbles and boost contrast for easier reading.
+- **Mini-Inspector**: Hover or select any building to see exact active ranges and modifiers in a compact pop-up.
+- **Corrected Upgrades Overlay**: Overlays now correctly center on the parent building when upgrades or sub-buildings are selected.
+- **Clean Road Network Filter**: Exact Polygon searches now follow real roads only, ignoring utility lines.
+- **Floating Stats in All Modes**: 3D stat bubbles now display in both standard and Exact Polygon visualization modes.
 
-		Uncompromising Performance: Designed with extreme optimization. By hooking directly into the native rendering pipeline, this mod runs with virtually zero overhead. Experience butter-smooth overlays that won't cost you a single frame or cause UI thread hitching.
+# Key Features
 
-		Clean & Unobtrusive: The overlay graphics are crisp, color-coded, and scale perfectly with the game engine's camera without cluttering your screen.
+- **Multiple Visualization Modes**: Classic Rings, Neon Rings, Soft Glow, Roads Only, Exact Polygon (BFS Isochrone), and Cached Heatmap.
+- **Passive Auras vs. Service Radii**: Visualize radial aura modifiers like Well-being alongside road-based services like Police, Fire, Education, Health, and Deathcare.
+- **Floating 3D Stats Overlay**: Floating bubbles above buildings show exactly which service modifiers are applied to them.
+- **Native Engine Integration**: Draws natively in 3D space using the game's OverlayRenderSystem for pixel-perfect camera scaling.
+- **Uncompromising Performance**: Fully Burst-compiled Unity jobs. Virtually zero CPU overhead and no UI thread hitching.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="Properties/screenshots/bubbles.jpg" />
-	<Screenshot Value="Properties/screenshots/color settings.jpg" />
 	<Screenshot Value="Properties/screenshots/layers 1.png" />
 	<Screenshot Value="Properties/screenshots/layers 2.png" />
-	<Screenshot Value="Properties/screenshots/layers close.jpg" />
-	<Screenshot Value="Properties/screenshots/layers far.jpg" />
-	<Screenshot Value="Properties/screenshots/reach.jpg" />
-	<Screenshot Value="Properties/screenshots/settings layers bubbles.jpg" />
+	<Screenshot Value="Properties/screenshots/layers.jpg" />
+	<Screenshot Value="Properties/screenshots/polygon.jpg" />
+	<Screenshot Value="Properties/screenshots/presets.png" />
+	<Screenshot Value="Properties/screenshots/roads.jpg" />
 	<Screenshot Value="Properties/screenshots/settings.png" />
 	<Screenshot Value="Properties/screenshots/well-being reach.jpg" />
+	<Screenshot Value="Properties/screenshots/well-being reach 2.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/testing-area-of-effect-native-aura-radius-visualizer.1924429/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0.0" />
+	<ModVersion Value="1.0.2" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.5.8*" />
+	<GameVersion Value="1.5.10*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Required DLC, can be set multiple times. Supported values are "Landmark Buildings", "San Fransisco Set", "Beach Properties", "Urban Promenades", "Modern Architecture"-->
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="" />
-	<!--<ChangeLog>
-	</ChangeLog>-->
+	<ChangeLog>
+# v1.0.2
+
+- **Presets System**: Save and load up to 5 custom layer configurations with colors and settings.
+- **Interactive UI**: Main panel and Mini-Inspector window positions now persist across game sessions.
+- **High Visibility Mode**: New setting to scale up floating stat bubbles and boost contrast for easier readability.
+- **Mini-Inspector**: Hover or select any building to see a compact pop-up with exact active ranges and modifiers.
+- **Corrected Upgrades Overlay**: Overlays now correctly center on the parent building when upgrades or sub-buildings are selected.
+- **Clean Road Network Filter**: Exact Polygon searches now follow real roads only, ignoring utility lines.
+- **Floating Stats in All Modes**: 3D floating bubbles now display in both standard and Exact Polygon visualization modes.
+- **Bug Fixes**: Various stability improvements and rendering corrections.
+	</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/binded-zz/Area_of_Effect" />
 	<!--Supported values Public, Private, Unlisted-->
 	<AccessLevel Value="Public" />
 </Publish>

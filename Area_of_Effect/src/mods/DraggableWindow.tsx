@@ -7,6 +7,7 @@ interface Props {
     initialX: number;
     initialY: number;
     id?: string;
+    onDragEnd?: (pos: { x: number; y: number }) => void;
 }
 
 /**
@@ -17,8 +18,8 @@ interface Props {
  */
 export const DragContext = React.createContext<React.MouseEventHandler | null>(null);
 
-export const DraggableWindow: React.FC<Props> = ({ children, initialX, initialY, id = "default_window" }) => {
-    const { position, onMouseDown } = useDraggable(id, { x: initialX, y: initialY });
+export const DraggableWindow: React.FC<Props> = ({ children, initialX, initialY, id = "default_window", onDragEnd }) => {
+    const { position, onMouseDown } = useDraggable(id, { x: initialX, y: initialY }, onDragEnd);
 
     return (
         <div

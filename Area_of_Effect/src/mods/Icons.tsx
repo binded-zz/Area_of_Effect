@@ -87,21 +87,95 @@ export const IconMeals = ({ size = 20, color = 'white' }) => (
     </svg>
 );
 
+export const IconAoE = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 10h4v11h-4z" fill={toHexColor(color)} />
+        <path d="M6 14h3v7H6z" fill={toHexColor(color)} opacity="0.7" />
+        <path d="M15 13h3v8h-3z" fill={toHexColor(color)} opacity="0.7" />
+        <path d="M12 2a9 9 0 0 1 9 9" stroke={toHexColor(color)} strokeWidth="2" strokeLinecap="round" />
+        <path d="M3 11a9 9 0 0 1 9 -9" stroke={toHexColor(color)} strokeWidth="2" strokeLinecap="round" />
+        <path d="M12 5a6 6 0 0 1 6 6" stroke={toHexColor(color)} strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M6 11a6 6 0 0 1 6 -6" stroke={toHexColor(color)} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+);
+
+export const IconElementary = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 9v13h20V9L12 2zm2 18h-4v-5h4v5zm6 0h-4v-7H8v7H4V10.2l8-5.6 8 5.6V20z" fill={toHexColor(color)}/>
+        <path d="M11 11.5h2l.5 1.5h1l-1.5-4h-1l-1.5 4h1l.5-1.5zm1-2.5l.6 2h-1.2l.6-2z" fill={toHexColor(color)}/>
+    </svg>
+);
+
+export const IconHighSchool = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 9v13h20V9L12 3 2 9zm18 11H4V10.5l8-4.8 8 4.8V20z" fill={toHexColor(color)}/>
+        <path d="M12 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill={toHexColor(color)}/>
+        <path d="M12 9.5v1h1" stroke={toHexColor(color)} strokeWidth="1" strokeLinecap="round"/>
+        <path d="M10 20h4v-3h-4v3z" fill={toHexColor(color)}/>
+    </svg>
+);
+
+export const IconCollege = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L1 7l11 5 9-4.1V15h2V7L12 2z" fill={toHexColor(color)}/>
+        <path d="M5 11.3v4.2c0 1.6 3.1 3 7 3s7-1.4 7-3v-4.2l-7 3.2-7-3.2z" fill={toHexColor(color)}/>
+        <path d="M21 7.5v5c0 .8-.5 1.5-1.2 1.8l-.8.4V8.5l2-1z" fill={toHexColor(color)} opacity="0.7"/>
+    </svg>
+);
+
+export const IconUniversity = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7v2h20V7L12 2z" fill={toHexColor(color)}/>
+        <path d="M4 10h3v9H4zm5 0h3v9H9zm5 0h3v9h-3zm5 0h3v9h-3z" fill={toHexColor(color)}/>
+        <path d="M1 20h22v2H1z" fill={toHexColor(color)}/>
+    </svg>
+);
+
+export const IconDeathcare = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3a7 7 0 0 0-7 7v10h14V10a7 7 0 0 0-7-7zm2 9h-2v3h-2v-3H8v-2h2V8h2v2h2v2z" fill={toHexColor(color)}/>
+        <path d="M2 21h20v2H2z" fill={toHexColor(color)}/>
+    </svg>
+);
+
+export const IconCrime = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" fill={toHexColor(color)}/>
+        <path d="M17 10a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" fill={toHexColor(color)}/>
+        <path d="M10.5 11h3v2h-3z" fill={toHexColor(color)}/>
+    </svg>
+);
+
+export const IconFireHazard = ({ size = 20, color = 'white' }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z" fill={toHexColor(color)}/>
+        <path d="M12 17a2 2 0 0 0 2-2c0-1-1-2-2-3-1 1-2 2-2 3a2 2 0 0 0 2 2z" fill={toHexColor(color)}/>
+    </svg>
+);
+
 export const getIconForLayer = (id: string, size: number, color: string) => {
     if (!id || typeof id !== 'string') return <IconWellbeing size={size} color={color} />;
     const lid = id.toLowerCase();
     if (lid.includes('wellbeing') || lid.includes('well-being')) return <IconWellbeing size={size} color={color} />;
     if (lid.includes('health') || lid.includes('medical') || lid.includes('hospital')) return <IconHealthcare size={size} color={color} />;
-    if (lid.includes('police') || lid.includes('crime')) return <IconPolice size={size} color={color} />;
+    if (lid.includes('crime')) return <IconCrime size={size} color={color} />;
+    if (lid.includes('police')) return <IconPolice size={size} color={color} />;
+    if (lid.includes('firehazard') || lid.includes('fire hazard')) return <IconFireHazard size={size} color={color} />;
     if (lid.includes('fire')) return <IconFire size={size} color={color} />;
     if (lid.includes('parks') || lid.includes('leisure')) return <IconParks size={size} color={color} />;
-    if (lid.includes('elementary') || lid.includes('school') || lid.includes('highschool') || lid.includes('college') || lid.includes('university') || lid.includes('edu')) return <IconEducation size={size} color={color} />;
+    if (lid.includes('elementary')) return <IconElementary size={size} color={color} />;
+    if (lid.includes('highschool') || lid.includes('high school')) return <IconHighSchool size={size} color={color} />;
+    if (lid.includes('college')) return <IconCollege size={size} color={color} />;
+    if (lid.includes('university')) return <IconUniversity size={size} color={color} />;
+    if (lid.includes('school') || lid.includes('edu')) return <IconEducation size={size} color={color} />;
     if (lid.includes('telecom')) return <IconTelecom size={size} color={color} />;
     if (lid.includes('post') || lid.includes('postal') || lid.includes('mail')) return <IconPostal size={size} color={color} />;
     if (lid.includes('attract')) return <IconWellbeing size={size} color={color} />;
     if (lid.includes('pollution') || lid.includes('noise') || lid.includes('garbage')) return <IconPollution size={size} color={color} />;
     if (lid.includes('efficiency') || lid.includes('coverage')) return <IconEfficiency size={size} color={color} />;
     if (lid.includes('meals')) return <IconMeals size={size} color={color} />;
+    if (lid.includes('building')) return <IconAoE size={size} color={color} />;
+    if (lid.includes('deathcare')) return <IconDeathcare size={size} color={color} />;
     return <IconWellbeing size={size} color={color} />;
 };
 

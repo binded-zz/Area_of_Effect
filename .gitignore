@@ -7,3 +7,7 @@
 
 # Unity / game library
 Area_of_Effect/Library/
+
+# Visual Studio user-specific files
+*.user
+*.suo

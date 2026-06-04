@@ -17,17 +17,44 @@ namespace Area_of_Effect
         public void OnLoad(UpdateSystem updateSystem)
         {
             log.Info(nameof(OnLoad));
+            try
+            {
+                string assetPath = null;
+                if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset) && asset != null)
+                {
+                    assetPath = asset.path;
+                    log.Info($"Current mod asset at {assetPath ?? "NULL"}");
+                }
 
-            if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
-                log.Info($"Current mod asset at {asset.path}");
+                Settings = new ModSettings.ModSettings(this);
 
-            Settings = new ModSettings.ModSettings(this);
-            AssetDatabase.global.LoadSettings(nameof(Area_of_Effect), Settings, new ModSettings.ModSettings(this));
-            Settings.RegisterInOptionsUI();
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(Settings));
+                if (!string.IsNullOrEmpty(assetPath) && AssetDatabase.global != null)
+                {
+                    try
+                    {
+                        AssetDatabase.global.LoadSettings("ModsSettings/Area_of_Effect/Area_of_Effect", Settings, new ModSettings.ModSettings(this));
+                    }
+                    catch (System.Exception ex)
+                    {
+                        log.Error(ex, "Failed to load settings via AssetDatabase.global.LoadSettings");
+                    }
+                }
+                else
+                {
+                    log.Warn("Mod executable asset path is null or AssetDatabase.global is null, skipping LoadSettings.");
+                }
 
-            updateSystem.UpdateAt<AreaOfEffectUISystem>(SystemUpdatePhase.UIUpdate);
-            updateSystem.UpdateAt<AreaOfEffectSystem>(SystemUpdatePhase.ToolUpdate);
+                Settings.RegisterInOptionsUI();
+                GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(Settings));
+
+                updateSystem.UpdateAt<AreaOfEffectUISystem>(SystemUpdatePhase.UIUpdate);
+                updateSystem.UpdateAt<AreaOfEffectSystem>(SystemUpdatePhase.ToolUpdate);
+                updateSystem.UpdateAt<VisualizationDispatcherSystem>(SystemUpdatePhase.UIUpdate);
+            }
+            catch (System.Exception ex)
+            {
+                log.Error(ex, "Failed to initialize Mod");
+            }
         }
 
         public void OnDispose()

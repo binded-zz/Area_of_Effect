@@ -1,24 +1,31 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-export const useDraggable = (id: string, initialPosition: { x: number, y: number }) => {
-    // Load from localStorage or use initial
-    const [position, setPosition] = useState(() => {
-        try {
-            const saved = localStorage.getItem(`aoe_window_${id}`);
-            if (saved) return JSON.parse(saved);
-        } catch {}
-        return initialPosition;
-    });
+export const useDraggable = (
+    id: string,
+    initialPosition: { x: number; y: number },
+    onDragEnd?: (pos: { x: number; y: number }) => void
+) => {
+    const [position, setPosition] = useState(initialPosition);
+    
+    const positionRef = useRef(position);
+    positionRef.current = position;
 
     const dragState = useRef<{ startX: number; startY: number; posX: number; posY: number } | null>(null);
+
+    // Sync with initialPosition updates from the C# backend (e.g. on loading settings or factory resets)
+    useEffect(() => {
+        if (!dragState.current) {
+            setPosition(initialPosition);
+        }
+    }, [initialPosition.x, initialPosition.y]);
 
     const onMouseDown = useCallback((e: React.MouseEvent) => {
         if (e.button !== 0) return;
 
         const startX = e.clientX;
         const startY = e.clientY;
-        const posX = position.x;
-        const posY = position.y;
+        const posX = positionRef.current.x;
+        const posY = positionRef.current.y;
 
         dragState.current = { startX, startY, posX, posY };
 
@@ -33,6 +40,9 @@ export const useDraggable = (id: string, initialPosition: { x: number, y: number
         };
 
         const onMouseUp = () => {
+            if (dragState.current) {
+                onDragEnd?.(positionRef.current);
+            }
             dragState.current = null;
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
@@ -40,14 +50,7 @@ export const useDraggable = (id: string, initialPosition: { x: number, y: number
 
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
-    }, [position]);
-
-    // Save to localStorage on change
-    useEffect(() => {
-        try {
-            localStorage.setItem(`aoe_window_${id}`, JSON.stringify(position));
-        } catch {}
-    }, [position, id]);
+    }, [onDragEnd]);
 
     return { position, onMouseDown };
 };
