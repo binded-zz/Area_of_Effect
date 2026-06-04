@@ -84,7 +84,6 @@ When placing a new building the mod now draws the range boundary ring on the ter
 	<Screenshot Value="Properties/screenshots/presets.png" />
 	<Screenshot Value="Properties/screenshots/roads.jpg" />
 	<Screenshot Value="Properties/screenshots/settings.png" />
-	<Screenshot Value="Properties/screenshots/settings layers bubbles.jpg" />
 	<Screenshot Value="Properties/screenshots/well-being reach.jpg" />
 	<Screenshot Value="Properties/screenshots/well-being reach 2.jpg" />
 	<!--Tag, can be set multiple times-->
@@ -101,7 +100,7 @@ When placing a new building the mod now draws the range boundary ring on the ter
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-		# v1.0.2
+		# v1.0.3
 		- Fixed screenshots and added new ones showcasing the new features.
 	</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
