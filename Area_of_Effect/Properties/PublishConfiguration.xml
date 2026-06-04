@@ -33,7 +33,6 @@ Take the guesswork out of city planning. Area of Effect renders the exact influe
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="Properties/screenshots/bubbles.jpg" />
 	<Screenshot Value="Properties/screenshots/layers 1.png" />
 	<Screenshot Value="Properties/screenshots/layers 2.png" />
 	<Screenshot Value="Properties/screenshots/layers.jpg" />
@@ -41,6 +40,7 @@ Take the guesswork out of city planning. Area of Effect renders the exact influe
 	<Screenshot Value="Properties/screenshots/presets.png" />
 	<Screenshot Value="Properties/screenshots/roads.jpg" />
 	<Screenshot Value="Properties/screenshots/settings.png" />
+	<Screenshot Value="Properties/screenshots/settings layers bubbles.jpg" />
 	<Screenshot Value="Properties/screenshots/well-being reach.jpg" />
 	<Screenshot Value="Properties/screenshots/well-being reach 2.jpg" />
 	<!--Tag, can be set multiple times-->
@@ -57,16 +57,17 @@ Take the guesswork out of city planning. Area of Effect renders the exact influe
 	<RequiredDLC Value="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-# v1.0.2
+		# v1.0.2
 
-- **Presets System**: Save and load up to 5 custom layer configurations with colors and settings.
-- **Interactive UI**: Main panel and Mini-Inspector window positions now persist across game sessions.
-- **High Visibility Mode**: New setting to scale up floating stat bubbles and boost contrast for easier readability.
-- **Mini-Inspector**: Hover or select any building to see a compact pop-up with exact active ranges and modifiers.
-- **Corrected Upgrades Overlay**: Overlays now correctly center on the parent building when upgrades or sub-buildings are selected.
-- **Clean Road Network Filter**: Exact Polygon searches now follow real roads only, ignoring utility lines.
-- **Floating Stats in All Modes**: 3D floating bubbles now display in both standard and Exact Polygon visualization modes.
-- **Bug Fixes**: Various stability improvements and rendering corrections.
+		- **Presets System**: Save and load up to 5 custom layer configurations with colors and settings.
+		- **Interactive UI**: Main panel and Mini-Inspector window positions now persist across game sessions.
+		- **High Visibility Mode**: New setting to scale up floating stat bubbles and boost contrast for easier readability.
+		- **Mini-Inspector**: Hover or select any building to see a compact pop-up with exact active ranges and modifiers.
+		- **Corrected Upgrades Overlay**: Overlays now correctly center on the parent building when upgrades or sub-buildings are selected.
+		- **Clean Road Network Filter**: Exact Polygon searches now follow real roads only, ignoring utility lines.
+		- **Floating Stats in All Modes**: 3D floating bubbles now display in both standard and Exact Polygon visualization modes.
+		- **Bug Fixes**: Various stability improvements and rendering corrections.
+		- **Fixed bug that caused overlays to disappear when selecting settings on the pause menu
 	</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
 	<ExternalLink Type="github" Url="https://github.com/binded-zz/Area_of_Effect" />
