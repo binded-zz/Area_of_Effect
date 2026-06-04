@@ -14,21 +14,65 @@ Take the guesswork out of city planning. Area of Effect renders the exact influe
 
 # What's New in v1.0.2
 
-- **Presets System**: Save and load up to 5 custom configurations of active layers, colors, and settings.
-- **Interactive UI**: Main panel and Mini-Inspector window positions now persist across game launches.
-- **High Visibility Mode**: Scale up floating stat bubbles and boost contrast for easier reading.
-- **Mini-Inspector**: Hover or select any building to see exact active ranges and modifiers in a compact pop-up.
-- **Corrected Upgrades Overlay**: Overlays now correctly center on the parent building when upgrades or sub-buildings are selected.
-- **Clean Road Network Filter**: Exact Polygon searches now follow real roads only, ignoring utility lines.
-- **Floating Stats in All Modes**: 3D stat bubbles now display in both standard and Exact Polygon visualization modes.
+This update is a massive overhaul under the hood with several major new features.
+
+## Visualization Mode System
+
+When you select a building, a new Visualization Mode button strip appears in the Layers tab. Switch between five modes:
+
+- **Off** - Disables the visualization entirely
+- **Circle** - Draws the native 3D service radius disc on the ground, clean and fast
+- **Roads** - Highlights only the road segments that fall within the service range
+- **Polygon** - Runs a true Breadth-First Search across the road network and draws the real jagged isochrone boundary, the actual area reachable by road, not just a circle
+- **Heatmap** - Reads the engine's cached service coverage data and renders it as a heat gradient at road nodes
+
+**Important - How the Heatmap Works:** Heatmap mode does not paint a continuous surface. It renders at road nodes, the junctions and connection points in the road network. This is intentional, that is where the game's own service coverage data lives. Each node glows at an intensity proportional to how much coverage it receives and nodes fade off with distance from the source building. The result looks like a constellation of glowing dots that gets dimmer the further out you go, which is an accurate picture of how service coverage decays in the simulation.
+
+**Tip:** To get the cleanest view of any visualization mode, turn off Local Effects in the Layers tab. Local effect rings can overlap and obscure the overlay, especially in dense city centers.
+
+## Local and Global Layers
+
+The mod can show a lot of information at once. Between local effect rings on every building and global service layer overlays, things can get very busy very fast.
+
+- If you just want to inspect one building, disable Global Layers and use the visualization modes
+- If you want a city-wide overview, disable Local Effects to reduce clutter
+- You do not have to run both simultaneously, each can be toggled independently in the Layers tab
+- Layer settings are saved separately for local and global so your preferences are remembered
+
+## Mini Inspector
+
+A new small draggable floating card appears when you select a building. It shows the building name, all active service effects in range such as well-being, healthcare, and education, effect values with color-coded positive and negative indicators, and the range of each effect. It can be enabled or disabled in settings. Its position is saved between sessions.
+
+## Pre-Placement Range Ring
+
+When placing a new building the mod now draws the range boundary ring on the terrain before you place it, so you can see exactly where coverage will reach before committing. Can be toggled off in settings.
+
+## Floating Stats Overhaul
+
+- **Proper unit formatting** - distance shows as meters, student counts, ambulances, hearses, fire engines, police cars, and postal vans all have correct labels
+- **Duplicate filtering** - the same stat will not appear twice on overlapping buildings
+- **Distance scaling** - bubbles scale smaller as you zoom out, staying readable without filling the screen
+- **High Visibility mode** - boosts contrast and font size if the default style is hard to read
+- **Bubble size slider** - scale the bubbles up or down to your preference
+
+## New Settings
+
+- **Enable Mini Inspector** - show or hide the floating building card
+- **Enable Pre-placement Ring** - range ring while placing buildings
+- **Show Overlay on Hover** - show the AoE radius when hovering a building without clicking
+- **High Visibility Mode** - boost stat bubble contrast
+- **Floating Stats Scale** - resize the stat bubbles
+- **Label Visibility Distance** - how far out labels remain visible when zoomed out
+- **Overlay Height** - nudge the height of the overlay above ground if z-fighting is an issue
+- **Saved Presets** - your custom layer configurations are saved and restored
 
 # Key Features
 
-- **Multiple Visualization Modes**: Classic Rings, Neon Rings, Soft Glow, Roads Only, Exact Polygon (BFS Isochrone), and Cached Heatmap.
-- **Passive Auras vs. Service Radii**: Visualize radial aura modifiers like Well-being alongside road-based services like Police, Fire, Education, Health, and Deathcare.
-- **Floating 3D Stats Overlay**: Floating bubbles above buildings show exactly which service modifiers are applied to them.
-- **Native Engine Integration**: Draws natively in 3D space using the game's OverlayRenderSystem for pixel-perfect camera scaling.
-- **Uncompromising Performance**: Fully Burst-compiled Unity jobs. Virtually zero CPU overhead and no UI thread hitching.
+- **Multiple Visualization Modes** - Circle, Roads Only, Exact Polygon BFS Isochrone, and Cached Heatmap
+- **Passive Auras vs. Service Radii** - Visualize radial aura modifiers like Well-being alongside road-based services like Police, Fire, Education, Health, and Deathcare
+- **Floating 3D Stats Overlay** - Floating bubbles above buildings show exactly which service modifiers are applied to them
+- **Native Engine Integration** - Draws natively in 3D space using the game's OverlayRenderSystem for pixel-perfect camera scaling
+- **Uncompromising Performance** - The visualization logic is fully decoupled into its own system and all heavy geometry work including BFS pathfinding, polygon decimation, and heatmap sampling runs in Burst-compiled parallel jobs so it does not block the main thread
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
@@ -48,7 +92,7 @@ Take the guesswork out of city planning. Area of Effect renders the exact influe
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/testing-area-of-effect-native-aura-radius-visualizer.1924429/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0.2" />
+	<ModVersion Value="1.0.3" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.5.10*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -58,16 +102,7 @@ Take the guesswork out of city planning. Area of Effect renders the exact influe
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
 		# v1.0.2
-
-		- **Presets System**: Save and load up to 5 custom layer configurations with colors and settings.
-		- **Interactive UI**: Main panel and Mini-Inspector window positions now persist across game sessions.
-		- **High Visibility Mode**: New setting to scale up floating stat bubbles and boost contrast for easier readability.
-		- **Mini-Inspector**: Hover or select any building to see a compact pop-up with exact active ranges and modifiers.
-		- **Corrected Upgrades Overlay**: Overlays now correctly center on the parent building when upgrades or sub-buildings are selected.
-		- **Clean Road Network Filter**: Exact Polygon searches now follow real roads only, ignoring utility lines.
-		- **Floating Stats in All Modes**: 3D floating bubbles now display in both standard and Exact Polygon visualization modes.
-		- **Bug Fixes**: Various stability improvements and rendering corrections.
-		- **Fixed bug that caused overlays to disappear when selecting settings on the pause menu
+		- Fixed screenshots and added new ones showcasing the new features.
 	</ChangeLog>
 	<!--External link, can be set multiple times. supported types are "discord", "github", "youtube", "twitch", "x", "paypal", "patreon", "buymeacoffee", "kofi", "crowdin", "gitlab", "gofundme"-->
 	<ExternalLink Type="github" Url="https://github.com/binded-zz/Area_of_Effect" />
